@@ -865,52 +865,72 @@
             alert(i18n[lang].serviceLogged);
         };
 
-        // Custom service log - INDIVIDUAL transaction with optional name
-        window.logCustomService = async () => {
-            let barberId;
-            if (userRole === 'barber') {
-                barberId = currentUser.uid;
-            } else {
-                const sel = document.getElementById('log-barber');
-                if (!sel || !sel.value) return alert(i18n[lang].selectBarber);
-                barberId = sel.value;
-            }
+       // ============== CUSTOM SERVICE LOG - FIXED ==============
+window.logCustomService = async () => {
+    let barberId;
+    
+    // Determine barber
+    if (userRole === 'barber') {
+        barberId = currentUser.uid;
+    } else {
+        const sel = document.getElementById('log-barber');
+        if (!sel || !sel.value) {
+            alert('Please select a barber');
+            return;
+        }
+        barberId = sel.value;
+    }
 
-            const customName = document.getElementById('custom-name')?.value || '';
-            const price = parseFloat(document.getElementById('custom-price')?.value);
-            const customers = parseInt(document.getElementById('log-customers').value) || 1;
+    // Get form values
+    const customName = document.getElementById('custom-name')?.value || '';
+    const priceInput = document.getElementById('custom-price');
+    const customersInput = document.getElementById('log-customers');
+    
+    const price = parseFloat(priceInput?.value);
+    const customers = parseInt(customersInput?.value) || 1;
 
-            if (!price || price <= 0) return alert(i18n[lang].fillAllFields);
+    // Validate
+    if (!price || price <= 0) {
+        alert('Please enter a valid price');
+        return;
+    }
 
-            const barber = barbers.find(b => b.uid === barberId);
-            const now = new Date();
-            const dateStr = now.toISOString().split('T')[0];
-            const timeStr = now.toLocaleTimeString();
+    const barber = barbers.find(b => b.uid === barberId);
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = now.toLocaleTimeString();
 
-            // Add INDIVIDUAL custom transaction
-            await addDoc(collection(db, "transactions"), {
-                barberId,
-                barberName: barber?.name || barber?.email || 'Unknown',
-                serviceId: 'custom',
-                serviceNameEn: 'Custom Service',
-                serviceNameAr: 'خدمة مخصصة',
-                customName: customName || (lang === 'en' ? 'Custom' : 'مخصص'),
-                price,
-                customers,
-                timestamp: serverTimestamp(),
-                date: dateStr,
-                time: timeStr,
-                loggedBy: currentUser.uid,
-                loggedByEmail: currentUser.email,
-                isCustom: true
-            });
+    try {
+        // Add INDIVIDUAL custom transaction
+        await addDoc(collection(db, "transactions"), {
+            barberId,
+            barberName: barber?.name || barber?.email?.split('@')[0] || 'Unknown',
+            serviceId: 'custom',
+            serviceNameEn: 'Custom Service',
+            serviceNameAr: 'خدمة مخصصة',
+            customName: customName || (lang === 'en' ? 'Custom' : 'مخصص'),
+            price,
+            customers,
+            timestamp: serverTimestamp(),
+            date: dateStr,
+            time: timeStr,
+            loggedBy: currentUser.uid,
+            loggedByEmail: currentUser.email,
+            isCustom: true
+        });
 
-            // Clear custom fields
-            if (document.getElementById('custom-name')) document.getElementById('custom-name').value = '';
-            if (document.getElementById('custom-price')) document.getElementById('custom-price').value = '';
-            
-            alert(i18n[lang].serviceLogged);
-        };
+        // Clear form fields
+        if (document.getElementById('custom-name')) document.getElementById('custom-name').value = '';
+        if (document.getElementById('custom-price')) document.getElementById('custom-price').value = '';
+        
+        // SUCCESS MESSAGE - FIXED: Using direct string instead of undefined variable
+        alert('✅ Service logged successfully!');
+        
+    } catch (error) {
+        console.error('Error logging custom service:', error);
+        alert('Error: ' + error.message);
+    }
+};
 
         // ============== TRANSACTIONS - DETAILED LIST ==============
         // ============== TRANSACTIONS - WITH ADMIN DELETE ==============
@@ -1823,4 +1843,5 @@ window.bulkDeleteTransactions = async () => {
     </main>
 </body>
 </html>
+
 
