@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>Barber Shop Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load external config (separate file for better organization) -->
     <script src="config.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
@@ -14,6 +13,8 @@
         .service-btn { transition: all 0.2s; min-height: 100px; }
         .service-btn:active { transform: scale(0.97); }
         .custom-service-card { background: linear-gradient(145deg, #f3f4f6 0%, #ffffff 100%); }
+        .hidden-panel { display: none !important; }
+        .active-tab { background-color: #3b82f6; color: white !important; }
     </style>
     <script type="module">
         // ============== FIREBASE IMPORTS ==============
@@ -22,7 +23,6 @@
         import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp, doc, setDoc, getDoc, onSnapshot, writeBatch, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // ============== FIREBASE INITIALIZATION ==============
-        // Config loaded from external config.js file (public keys - safe to expose)
         const firebaseConfig = window.FIREBASE_CONFIG;
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -47,17 +47,18 @@
                 passwordsNoMatch: "Passwords do not match",
                 dashboard: "Dashboard",
                 logService: "Log Service",
-                activityLogs: "Activity",
+                activityLogs: "Activity Logs",
                 reports: "Reports",
-                users: "Users",
-                services: "Services",
-                factoryReset: "Reset",
+                users: "User Management",
+                services: "Service Management",
+                factoryReset: "Factory Reset",
                 totalRevenue: "Total Revenue",
                 totalCustomers: "Total Customers",
                 totalServices: "Total Services",
                 activeBarbers: "Active Barbers",
                 today: "Today",
                 thisWeek: "This Week",
+                thisMonth: "This Month",
                 quickActions: "Quick Actions",
                 manageUsers: "Manage Users",
                 manageServices: "Manage Services",
@@ -73,8 +74,8 @@
                 allBarbers: "All Barbers",
                 startDate: "Start Date",
                 endDate: "End Date",
-                filter: "Filter",
-                reset: "Reset",
+                filter: "Apply Filters",
+                reset: "Reset Filters",
                 serviceLogs: "Service Logs",
                 dateTime: "Date & Time",
                 barber: "Barber",
@@ -85,8 +86,8 @@
                 serviceLogged: "Service logged successfully!",
                 userCreated: "User created successfully!",
                 serviceAdded: "Service added successfully!",
-                addUser: "Add User",
-                addService: "Add Service",
+                addUser: "Add New User",
+                addService: "Add New Service",
                 fullName: "Full Name",
                 role: "Role",
                 actions: "Actions",
@@ -99,6 +100,7 @@
                 servicesToday: "Services completed today",
                 barbersActive: "Barbers who logged services",
                 revenueThisWeek: "Revenue earned this week",
+                revenueThisMonth: "Revenue earned this month",
                 userManagement: "User Management",
                 allUsers: "All Users",
                 username: "Username",
@@ -116,12 +118,13 @@
                 generateReports: "Generate Reports",
                 barberPerformance: "Barber Performance",
                 serviceStatistics: "Service Statistics",
-                dailySales: "Daily Sales",
+                dailySales: "Daily Sales Report",
+                monthlySales: "Monthly Sales Report",
+                barberBreakdown: "Barber Breakdown",
                 forSelectedPeriod: "For selected period",
                 resetSystem: "Reset the system to its initial state",
                 irreversible: "This action is irreversible and will permanently delete all data.",
                 confirmDelete: "Are you sure you want to delete this?",
-                // Custom Service Translations
                 customService: "Custom Service",
                 customServiceDesc: "Service not in list? Enter custom price",
                 customPrice: "Custom Price ($)",
@@ -129,7 +132,20 @@
                 logCustomService: "Log Custom Service",
                 customServiceLogged: "Custom service logged successfully!",
                 customServicePlaceholder: "Service name (optional)",
-                customServiceName: "Service Name (optional)"
+                customServiceName: "Service Name (optional)",
+                exportCSV: "Export to CSV",
+                printReport: "Print Report",
+                total: "Total",
+                average: "Average",
+                filterByBarber: "Filter by Barber",
+                filterByDate: "Filter by Date",
+                applyDateRange: "Apply Date Range",
+                clearFilters: "Clear Filters",
+                loading: "Loading...",
+                unauthorized: "You are not authorized to view this page",
+                adminOnly: "Admin Only",
+                cashierOnly: "Cashier Only",
+                barberOnly: "Barber Only"
             },
             ar: {
                 appName: "محترف الحلاقة",
@@ -148,17 +164,18 @@
                 passwordsNoMatch: "كلمات المرور غير متطابقة",
                 dashboard: "الرئيسية",
                 logService: "تسجيل خدمة",
-                activityLogs: "النشاطات",
+                activityLogs: "سجل النشاطات",
                 reports: "التقارير",
-                users: "المستخدمين",
-                services: "الخدمات",
-                factoryReset: "إعادة ضبط",
+                users: "إدارة المستخدمين",
+                services: "إدارة الخدمات",
+                factoryReset: "إعادة ضبط المصنع",
                 totalRevenue: "إجمالي الإيرادات",
                 totalCustomers: "إجمالي العملاء",
                 totalServices: "إجمالي الخدمات",
                 activeBarbers: "الحلاقين النشطين",
                 today: "اليوم",
                 thisWeek: "هذا الأسبوع",
+                thisMonth: "هذا الشهر",
                 quickActions: "إجراءات سريعة",
                 manageUsers: "إدارة المستخدمين",
                 manageServices: "إدارة الخدمات",
@@ -174,7 +191,7 @@
                 allBarbers: "كل الحلاقين",
                 startDate: "تاريخ البداية",
                 endDate: "تاريخ النهاية",
-                filter: "تصفية",
+                filter: "تطبيق التصفية",
                 reset: "إعادة ضبط",
                 serviceLogs: "سجل الخدمات",
                 dateTime: "التاريخ والوقت",
@@ -186,8 +203,8 @@
                 serviceLogged: "تم تسجيل الخدمة بنجاح!",
                 userCreated: "تم إنشاء المستخدم بنجاح!",
                 serviceAdded: "تمت إضافة الخدمة بنجاح!",
-                addUser: "إضافة مستخدم",
-                addService: "إضافة خدمة",
+                addUser: "إضافة مستخدم جديد",
+                addService: "إضافة خدمة جديدة",
                 fullName: "الاسم الكامل",
                 role: "الدور",
                 actions: "إجراءات",
@@ -200,6 +217,7 @@
                 servicesToday: "الخدمات اليوم",
                 barbersActive: "الحلاقين النشطين",
                 revenueThisWeek: "إيرادات الأسبوع",
+                revenueThisMonth: "إيرادات الشهر",
                 userManagement: "إدارة المستخدمين",
                 allUsers: "جميع المستخدمين",
                 username: "اسم المستخدم",
@@ -217,12 +235,13 @@
                 generateReports: "إنشاء تقرير",
                 barberPerformance: "أداء الحلاقين",
                 serviceStatistics: "إحصائيات الخدمات",
-                dailySales: "المبيعات اليومية",
+                dailySales: "تقرير المبيعات اليومية",
+                monthlySales: "تقرير المبيعات الشهرية",
+                barberBreakdown: "تفصيل الحلاقين",
                 forSelectedPeriod: "للفترة المحددة",
                 resetSystem: "إعادة تعيين النظام للحالة الأولية",
                 irreversible: "هذا الإجراء لا يمكن التراجع عنه وسيتم حذف جميع البيانات نهائياً.",
                 confirmDelete: "هل أنت متأكد من الحذف؟",
-                // Custom Service Translations
                 customService: "خدمة مخصصة",
                 customServiceDesc: "الخدمة غير موجودة؟ أدخل سعر مخصص",
                 customPrice: "السعر المخصص ($)",
@@ -230,7 +249,20 @@
                 logCustomService: "تسجيل خدمة مخصصة",
                 customServiceLogged: "تم تسجيل الخدمة المخصصة بنجاح!",
                 customServicePlaceholder: "اسم الخدمة (اختياري)",
-                customServiceName: "اسم الخدمة (اختياري)"
+                customServiceName: "اسم الخدمة (اختياري)",
+                exportCSV: "تصدير CSV",
+                printReport: "طباعة التقرير",
+                total: "الإجمالي",
+                average: "المتوسط",
+                filterByBarber: "تصفية حسب الحلاق",
+                filterByDate: "تصفية حسب التاريخ",
+                applyDateRange: "تطبيق النطاق الزمني",
+                clearFilters: "مسح التصفية",
+                loading: "جاري التحميل...",
+                unauthorized: "ليس لديك صلاحية لعرض هذه الصفحة",
+                adminOnly: "للمدير فقط",
+                cashierOnly: "للكاشير فقط",
+                barberOnly: "للحلاق فقط"
             }
         };
 
@@ -243,8 +275,10 @@
         let allUsers = [];
         let transactions = [];
         let barbers = [];
+        let cashiers = [];
         let today = new Date().toISOString().split('T')[0];
         let weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        let monthAgo = new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0];
         
         // Report Filters
         let reportStartDate = weekAgo;
@@ -252,6 +286,7 @@
         let filterBarber = 'all';
         let filterDateStart = weekAgo;
         let filterDateEnd = today;
+        let currentPanel = 'dashboard';
 
         // ============== INITIALIZATION ==============
         document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
@@ -267,25 +302,14 @@
             refreshUI();
             
             if (currentUser) {
-                const visiblePanel = getVisiblePanel();
-                if (visiblePanel === 'dashboard') renderDashboard();
-                else if (visiblePanel === 'services') renderServices();
-                else if (visiblePanel === 'activity') renderActivityLogs();
-                else if (visiblePanel === 'reports') renderReports();
-                else if (visiblePanel === 'users') renderUserManagement();
-                else if (visiblePanel === 'services-mgmt') renderServiceManagement();
+                if (currentPanel === 'dashboard') renderDashboard();
+                else if (currentPanel === 'services') renderServices();
+                else if (currentPanel === 'activity') renderActivityLogs();
+                else if (currentPanel === 'reports') renderReports();
+                else if (currentPanel === 'users' && userRole === 'admin') renderUserManagement();
+                else if (currentPanel === 'services-mgmt' && userRole === 'admin') renderServiceManagement();
             }
         };
-
-        function getVisiblePanel() {
-            if (!document.getElementById('dashboard-panel').classList.contains('hidden')) return 'dashboard';
-            if (!document.getElementById('services-panel').classList.contains('hidden')) return 'services';
-            if (!document.getElementById('activity-panel').classList.contains('hidden')) return 'activity';
-            if (!document.getElementById('reports-panel').classList.contains('hidden')) return 'reports';
-            if (!document.getElementById('user-management-panel').classList.contains('hidden')) return 'users';
-            if (!document.getElementById('service-management-panel').classList.contains('hidden')) return 'services-mgmt';
-            return 'dashboard';
-        }
 
         // Check First Time Setup
         async function checkFirstTimeSetup() {
@@ -319,9 +343,11 @@
                     document.getElementById('app-view').classList.remove('hidden');
                     
                     document.getElementById('logout-btn').classList.remove('hidden');
-                    document.getElementById('admin-tab').classList.toggle('hidden', userRole !== 'admin');
-                    document.getElementById('admin-tab2').classList.toggle('hidden', userRole !== 'admin');
-                    document.getElementById('admin-tab3').classList.toggle('hidden', userRole !== 'admin');
+                    
+                    // Show/hide admin tabs based on role
+                    document.getElementById('admin-users-tab').classList.toggle('hidden', userRole !== 'admin');
+                    document.getElementById('admin-services-tab').classList.toggle('hidden', userRole !== 'admin');
+                    document.getElementById('admin-reset-tab').classList.toggle('hidden', userRole !== 'admin');
                     
                     initializeListeners();
                     showPanel('dashboard');
@@ -342,55 +368,65 @@
 
         // Initialize Firestore Listeners
         function initializeListeners() {
+            // Services listener - all roles can see services
             onSnapshot(collection(db, "services"), (snapshot) => {
                 services = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if (!document.getElementById('services-panel').classList.contains('hidden')) {
+                if (currentPanel === 'services') {
                     renderServices();
                 }
-                if (!document.getElementById('service-management-panel').classList.contains('hidden')) {
+                if (currentPanel === 'services-mgmt' && userRole === 'admin') {
                     renderServiceManagement();
                 }
             });
 
+            // Users listener - admin only sees all users, others see only barbers
             if (userRole === 'admin') {
                 onSnapshot(collection(db, "users"), (snapshot) => {
                     allUsers = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
                     barbers = allUsers.filter(u => u.role === 'barber');
-                    if (!document.getElementById('user-management-panel').classList.contains('hidden')) {
+                    cashiers = allUsers.filter(u => u.role === 'cashier');
+                    if (currentPanel === 'users') {
                         renderUserManagement();
                     }
                 });
             } else {
+                // Non-admins only need barber list for dropdowns
                 onSnapshot(query(collection(db, "users"), where("role", "==", "barber")), (snapshot) => {
                     barbers = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
                 });
             }
 
+            // Transactions listener with role-based filtering
             let transactionsQuery;
             if (userRole === 'admin') {
+                // Admin sees all transactions
                 transactionsQuery = query(collection(db, "transactions"), orderBy("timestamp", "desc"));
             } else if (userRole === 'barber') {
+                // Barber sees only their own transactions
                 transactionsQuery = query(
                     collection(db, "transactions"), 
                     where("barberId", "==", currentUser.uid),
                     orderBy("timestamp", "desc")
                 );
-            } else {
+            } else if (userRole === 'cashier') {
+                // Cashier sees all transactions (they log for everyone)
                 transactionsQuery = query(collection(db, "transactions"), orderBy("timestamp", "desc"));
             }
 
-            onSnapshot(transactionsQuery, (snapshot) => {
-                transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if (!document.getElementById('dashboard-panel').classList.contains('hidden')) {
-                    renderDashboard();
-                }
-                if (!document.getElementById('activity-panel').classList.contains('hidden')) {
-                    renderActivityLogs();
-                }
-                if (!document.getElementById('reports-panel').classList.contains('hidden')) {
-                    renderReports();
-                }
-            });
+            if (transactionsQuery) {
+                onSnapshot(transactionsQuery, (snapshot) => {
+                    transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    if (currentPanel === 'dashboard') {
+                        renderDashboard();
+                    }
+                    if (currentPanel === 'activity') {
+                        renderActivityLogs();
+                    }
+                    if (currentPanel === 'reports') {
+                        renderReports();
+                    }
+                });
+            }
         }
 
         // ============== AUTHENTICATION ==============
@@ -426,6 +462,7 @@
                     createdBy: 'self'
                 });
 
+                // Default services
                 const defaultServices = [
                     { nameEn: "Haircut", nameAr: "حلاقة شعر", price: 120, icon: "✂️" },
                     { nameEn: "Beard Trim", nameAr: "حلاقة دقن", price: 50, icon: "🧔" },
@@ -442,6 +479,7 @@
                 });
                 await batch.commit();
 
+                alert("Admin created successfully! You can now login.");
             } catch (error) {
                 console.error(error);
                 alert(error.message);
@@ -478,32 +516,71 @@
 
         // ============== NAVIGATION ==============
         window.showPanel = (panelId) => {
-            const panels = ['dashboard', 'services', 'activity', 'reports', 'users', 'services-mgmt', 'reset'];
-            panels.forEach(p => {
-                const el = document.getElementById(`${p}-panel`);
-                if (el) el.classList.add('hidden');
+            currentPanel = panelId;
+            
+            // Hide all panels
+            document.getElementById('dashboard-panel').classList.add('hidden');
+            document.getElementById('services-panel').classList.add('hidden');
+            document.getElementById('activity-panel').classList.add('hidden');
+            document.getElementById('reports-panel').classList.add('hidden');
+            document.getElementById('user-management-panel').classList.add('hidden');
+            document.getElementById('service-management-panel').classList.add('hidden');
+            document.getElementById('factory-reset-panel').classList.add('hidden');
+
+            // Remove active class from all tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('bg-blue-600', 'text-white');
+                tab.classList.add('text-gray-600', 'hover:bg-gray-50');
             });
 
-            const panelMap = {
-                'dashboard': 'dashboard-panel',
-                'services': 'services-panel',
-                'activity': 'activity-panel',
-                'reports': 'reports-panel',
-                'users': 'user-management-panel',
-                'services-mgmt': 'service-management-panel',
-                'reset': 'factory-reset-panel'
-            };
+            // Add active class to clicked tab
+            const activeTab = document.getElementById(`tab-${panelId}`);
+            if (activeTab) {
+                activeTab.classList.remove('text-gray-600', 'hover:bg-gray-50');
+                activeTab.classList.add('bg-blue-600', 'text-white');
+            }
 
-            const panelToShow = document.getElementById(panelMap[panelId]);
-            if (panelToShow) {
-                panelToShow.classList.remove('hidden');
-                
-                if (panelId === 'dashboard') renderDashboard();
-                if (panelId === 'services') renderServices();
-                if (panelId === 'activity') renderActivityLogs();
-                if (panelId === 'reports') renderReports();
-                if (panelId === 'users') renderUserManagement();
-                if (panelId === 'services-mgmt') renderServiceManagement();
+            // Show selected panel based on role
+            if (panelId === 'dashboard') {
+                document.getElementById('dashboard-panel').classList.remove('hidden');
+                renderDashboard();
+            } else if (panelId === 'services') {
+                document.getElementById('services-panel').classList.remove('hidden');
+                renderServices();
+            } else if (panelId === 'activity') {
+                document.getElementById('activity-panel').classList.remove('hidden');
+                renderActivityLogs();
+            } else if (panelId === 'reports') {
+                if (userRole === 'admin' || userRole === 'cashier') {
+                    document.getElementById('reports-panel').classList.remove('hidden');
+                    renderReports();
+                } else {
+                    alert(i18n[lang].unauthorized);
+                    showPanel('dashboard');
+                }
+            } else if (panelId === 'users') {
+                if (userRole === 'admin') {
+                    document.getElementById('user-management-panel').classList.remove('hidden');
+                    renderUserManagement();
+                } else {
+                    alert(i18n[lang].unauthorized);
+                    showPanel('dashboard');
+                }
+            } else if (panelId === 'services-mgmt') {
+                if (userRole === 'admin') {
+                    document.getElementById('service-management-panel').classList.remove('hidden');
+                    renderServiceManagement();
+                } else {
+                    alert(i18n[lang].unauthorized);
+                    showPanel('dashboard');
+                }
+            } else if (panelId === 'reset') {
+                if (userRole === 'admin') {
+                    document.getElementById('factory-reset-panel').classList.remove('hidden');
+                } else {
+                    alert(i18n[lang].unauthorized);
+                    showPanel('dashboard');
+                }
             }
         };
 
@@ -511,14 +588,25 @@
         function renderDashboard() {
             const todayStr = new Date().toISOString().split('T')[0];
             const weekAgoStr = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            const monthAgoStr = new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0];
             
-            const todayTransactions = transactions.filter(t => t.date === todayStr);
-            const weekTransactions = transactions.filter(t => t.date >= weekAgoStr);
+            let todayTransactions, weekTransactions, monthTransactions;
+            
+            if (userRole === 'barber') {
+                todayTransactions = transactions.filter(t => t.date === todayStr && t.barberId === currentUser.uid);
+                weekTransactions = transactions.filter(t => t.date >= weekAgoStr && t.barberId === currentUser.uid);
+                monthTransactions = transactions.filter(t => t.date >= monthAgoStr && t.barberId === currentUser.uid);
+            } else {
+                todayTransactions = transactions.filter(t => t.date === todayStr);
+                weekTransactions = transactions.filter(t => t.date >= weekAgoStr);
+                monthTransactions = transactions.filter(t => t.date >= monthAgoStr);
+            }
             
             const todayRevenue = todayTransactions.reduce((sum, t) => sum + (t.price || 0), 0);
             const todayCustomers = todayTransactions.reduce((sum, t) => sum + (t.customers || 1), 0);
             const todayServices = todayTransactions.length;
             const weekRevenue = weekTransactions.reduce((sum, t) => sum + (t.price || 0), 0);
+            const monthRevenue = monthTransactions.reduce((sum, t) => sum + (t.price || 0), 0);
             const activeBarbersToday = new Set(todayTransactions.map(t => t.barberId)).size;
 
             let dashboardHtml = '';
@@ -526,45 +614,61 @@
             if (userRole === 'admin') {
                 dashboardHtml = `
                     <div class="space-y-6">
-                        <h2 class="text-2xl font-bold" data-i18n="dashboard">Admin Dashboard</h2>
+                        <h2 class="text-2xl font-bold text-gray-800" data-i18n="dashboard">Admin Dashboard</h2>
+                        
+                        <!-- Stats Grid -->
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div class="bg-white p-6 rounded-3xl shadow-sm border">
+                            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                                 <div class="text-3xl font-bold text-blue-600">$${todayRevenue}</div>
                                 <div class="text-sm text-gray-600" data-i18n="totalRevenue">Total Revenue</div>
                                 <div class="text-xs text-gray-400" data-i18n="today">Today</div>
                             </div>
-                            <div class="bg-white p-6 rounded-3xl shadow-sm border">
+                            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                                 <div class="text-3xl font-bold text-green-600">${todayCustomers}</div>
                                 <div class="text-sm text-gray-600" data-i18n="totalCustomers">Total Customers</div>
                                 <div class="text-xs text-gray-400" data-i18n="today">Today</div>
                             </div>
-                            <div class="bg-white p-6 rounded-3xl shadow-sm border">
+                            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                                 <div class="text-3xl font-bold text-purple-600">${todayServices}</div>
                                 <div class="text-sm text-gray-600" data-i18n="totalServices">Total Services</div>
                                 <div class="text-xs text-gray-400" data-i18n="today">Today</div>
                             </div>
-                            <div class="bg-white p-6 rounded-3xl shadow-sm border">
+                            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                                 <div class="text-3xl font-bold text-orange-600">${activeBarbersToday}</div>
                                 <div class="text-sm text-gray-600" data-i18n="activeBarbers">Active Barbers</div>
                                 <div class="text-xs text-gray-400" data-i18n="today">Today</div>
                             </div>
                         </div>
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border">
-                            <h3 class="font-bold text-lg mb-4" data-i18n="quickActions">Quick Actions</h3>
+
+                        <!-- Secondary Stats -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-blue-50 p-6 rounded-3xl border border-blue-100">
+                                <div class="text-2xl font-bold text-blue-700">$${weekRevenue}</div>
+                                <div class="text-sm text-blue-600" data-i18n="thisWeek">This Week</div>
+                            </div>
+                            <div class="bg-green-50 p-6 rounded-3xl border border-green-100">
+                                <div class="text-2xl font-bold text-green-700">$${monthRevenue}</div>
+                                <div class="text-sm text-green-600" data-i18n="thisMonth">This Month</div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                            <h3 class="font-bold text-lg mb-4 text-gray-700" data-i18n="quickActions">Quick Actions</h3>
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                <button onclick="showPanel('users')" class="p-4 bg-blue-50 rounded-2xl text-center hover:bg-blue-100">
+                                <button onclick="showPanel('users')" class="p-4 bg-blue-50 rounded-2xl text-center hover:bg-blue-100 transition">
                                     <div class="text-2xl mb-2">👥</div>
                                     <div class="text-sm font-bold" data-i18n="manageUsers">Manage Users</div>
                                 </button>
-                                <button onclick="showPanel('services-mgmt')" class="p-4 bg-green-50 rounded-2xl text-center hover:bg-green-100">
+                                <button onclick="showPanel('services-mgmt')" class="p-4 bg-green-50 rounded-2xl text-center hover:bg-green-100 transition">
                                     <div class="text-2xl mb-2">✂️</div>
                                     <div class="text-sm font-bold" data-i18n="manageServices">Manage Services</div>
                                 </button>
-                                <button onclick="showPanel('reports')" class="p-4 bg-purple-50 rounded-2xl text-center hover:bg-purple-100">
+                                <button onclick="showPanel('reports')" class="p-4 bg-purple-50 rounded-2xl text-center hover:bg-purple-100 transition">
                                     <div class="text-2xl mb-2">📊</div>
                                     <div class="text-sm font-bold" data-i18n="viewReports">View Reports</div>
                                 </button>
-                                <button onclick="showPanel('services')" class="p-4 bg-yellow-50 rounded-2xl text-center hover:bg-yellow-100">
+                                <button onclick="showPanel('services')" class="p-4 bg-yellow-50 rounded-2xl text-center hover:bg-yellow-100 transition">
                                     <div class="text-2xl mb-2">📝</div>
                                     <div class="text-sm font-bold" data-i18n="logService">Log Service</div>
                                 </button>
@@ -573,44 +677,43 @@
                     </div>
                 `;
             } else if (userRole === 'barber') {
-                const myTodayTransactions = todayTransactions.filter(t => t.barberId === currentUser.uid);
-                const myTodayRevenue = myTodayTransactions.reduce((sum, t) => sum + (t.price || 0), 0);
-                const myTodayCustomers = myTodayTransactions.reduce((sum, t) => sum + (t.customers || 1), 0);
-                const myTodayServices = myTodayTransactions.length;
-                
                 dashboardHtml = `
                     <div class="space-y-6">
-                        <h2 class="text-2xl font-bold" data-i18n="dashboard">Barber Dashboard</h2>
+                        <h2 class="text-2xl font-bold text-gray-800" data-i18n="dashboard">Barber Dashboard</h2>
+                        
+                        <!-- Stats Grid -->
                         <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-white p-6 rounded-3xl shadow-sm border">
-                                <div class="text-3xl font-bold text-blue-600">$${myTodayRevenue}</div>
+                            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                                <div class="text-3xl font-bold text-blue-600">$${todayRevenue}</div>
                                 <div class="text-sm text-gray-600" data-i18n="totalRevenue">Total Revenue</div>
                                 <div class="text-xs text-gray-400" data-i18n="today">Today</div>
                             </div>
-                            <div class="bg-white p-6 rounded-3xl shadow-sm border">
-                                <div class="text-3xl font-bold text-green-600">${myTodayCustomers}</div>
+                            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                                <div class="text-3xl font-bold text-green-600">${todayCustomers}</div>
                                 <div class="text-sm text-gray-600" data-i18n="totalCustomers">Total Customers</div>
                                 <div class="text-xs text-gray-400" data-i18n="today">Today</div>
                             </div>
-                            <div class="bg-white p-6 rounded-3xl shadow-sm border">
-                                <div class="text-3xl font-bold text-purple-600">${myTodayServices}</div>
+                            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                                <div class="text-3xl font-bold text-purple-600">${todayServices}</div>
                                 <div class="text-sm text-gray-600" data-i18n="totalServices">Total Services</div>
                                 <div class="text-xs text-gray-400" data-i18n="today">Today</div>
                             </div>
-                            <div class="bg-white p-6 rounded-3xl shadow-sm border">
+                            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                                 <div class="text-3xl font-bold text-orange-600">$${weekRevenue}</div>
-                                <div class="text-sm text-gray-600" data-i18n="totalRevenue">Total Revenue</div>
-                                <div class="text-xs text-gray-400" data-i18n="thisWeek">This Week</div>
+                                <div class="text-sm text-gray-600" data-i18n="thisWeek">This Week</div>
+                                <div class="text-xs text-gray-400" data-i18n="totalRevenue">Revenue</div>
                             </div>
                         </div>
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border">
-                            <h3 class="font-bold text-lg mb-4" data-i18n="quickActions">Quick Actions</h3>
+
+                        <!-- Quick Actions -->
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                            <h3 class="font-bold text-lg mb-4 text-gray-700" data-i18n="quickActions">Quick Actions</h3>
                             <div class="grid grid-cols-2 gap-3">
-                                <button onclick="showPanel('services')" class="p-6 bg-blue-50 rounded-2xl text-center hover:bg-blue-100">
+                                <button onclick="showPanel('services')" class="p-6 bg-blue-50 rounded-2xl text-center hover:bg-blue-100 transition">
                                     <div class="text-3xl mb-2">✂️</div>
                                     <div class="font-bold" data-i18n="logService">Log Service</div>
                                 </button>
-                                <button onclick="showPanel('activity')" class="p-6 bg-green-50 rounded-2xl text-center hover:bg-green-100">
+                                <button onclick="showPanel('activity')" class="p-6 bg-green-50 rounded-2xl text-center hover:bg-green-100 transition">
                                     <div class="text-3xl mb-2">📊</div>
                                     <div class="font-bold" data-i18n="viewPerformance">View Performance</div>
                                 </button>
@@ -621,39 +724,47 @@
             } else if (userRole === 'cashier') {
                 dashboardHtml = `
                     <div class="space-y-6">
-                        <h2 class="text-2xl font-bold" data-i18n="dashboard">Cashier Dashboard</h2>
+                        <h2 class="text-2xl font-bold text-gray-800" data-i18n="dashboard">Cashier Dashboard</h2>
+                        
+                        <!-- Stats Grid -->
                         <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-white p-6 rounded-3xl shadow-sm border">
+                            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                                 <div class="text-3xl font-bold text-blue-600">$${todayRevenue}</div>
                                 <div class="text-sm text-gray-600" data-i18n="totalRevenue">Total Revenue</div>
                                 <div class="text-xs text-gray-400" data-i18n="today">Today</div>
                             </div>
-                            <div class="bg-white p-6 rounded-3xl shadow-sm border">
+                            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                                 <div class="text-3xl font-bold text-green-600">${todayCustomers}</div>
                                 <div class="text-sm text-gray-600" data-i18n="totalCustomers">Total Customers</div>
                                 <div class="text-xs text-gray-400" data-i18n="today">Today</div>
                             </div>
-                            <div class="bg-white p-6 rounded-3xl shadow-sm border">
+                            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                                 <div class="text-3xl font-bold text-purple-600">${todayServices}</div>
                                 <div class="text-sm text-gray-600" data-i18n="totalServices">Total Services</div>
                                 <div class="text-xs text-gray-400" data-i18n="today">Today</div>
                             </div>
-                            <div class="bg-white p-6 rounded-3xl shadow-sm border">
+                            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                                 <div class="text-3xl font-bold text-orange-600">$${weekRevenue}</div>
-                                <div class="text-sm text-gray-600" data-i18n="totalRevenue">Total Revenue</div>
-                                <div class="text-xs text-gray-400" data-i18n="thisWeek">This Week</div>
+                                <div class="text-sm text-gray-600" data-i18n="thisWeek">This Week</div>
+                                <div class="text-xs text-gray-400" data-i18n="totalRevenue">Revenue</div>
                             </div>
                         </div>
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border">
-                            <h3 class="font-bold text-lg mb-4" data-i18n="quickActions">Quick Actions</h3>
+
+                        <!-- Quick Actions -->
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                            <h3 class="font-bold text-lg mb-4 text-gray-700" data-i18n="quickActions">Quick Actions</h3>
                             <div class="grid grid-cols-2 gap-3">
-                                <button onclick="showPanel('services')" class="p-6 bg-blue-50 rounded-2xl text-center hover:bg-blue-100">
+                                <button onclick="showPanel('services')" class="p-6 bg-blue-50 rounded-2xl text-center hover:bg-blue-100 transition">
                                     <div class="text-3xl mb-2">✂️</div>
                                     <div class="font-bold" data-i18n="logService">Log Service</div>
                                 </button>
-                                <button onclick="showPanel('activity')" class="p-6 bg-green-50 rounded-2xl text-center hover:bg-green-100">
+                                <button onclick="showPanel('activity')" class="p-6 bg-green-50 rounded-2xl text-center hover:bg-green-100 transition">
                                     <div class="text-3xl mb-2">📊</div>
                                     <div class="font-bold" data-i18n="viewPerformance">View Statistics</div>
+                                </button>
+                                <button onclick="showPanel('reports')" class="p-6 bg-purple-50 rounded-2xl text-center hover:bg-purple-100 transition col-span-2">
+                                    <div class="text-3xl mb-2">📊</div>
+                                    <div class="font-bold" data-i18n="reports">Reports</div>
                                 </button>
                             </div>
                         </div>
@@ -667,11 +778,13 @@
 
         // ============== CUSTOM SERVICE FUNCTION ==============
         window.showCustomServiceModal = () => {
-            // Create modal HTML
+            // Only allow if user has permission (barber, cashier, admin)
+            if (!currentUser) return;
+            
             const modalHtml = `
                 <div id="custom-service-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl">
-                        <h3 class="text-2xl font-bold mb-4" data-i18n="customService">Custom Service</h3>
+                        <h3 class="text-2xl font-bold mb-4 text-gray-800" data-i18n="customService">Custom Service</h3>
                         <p class="text-gray-600 mb-6" data-i18n="customServiceDesc">Service not in list? Enter custom price</p>
                         
                         ${(userRole === 'cashier' || userRole === 'admin') ? `
@@ -696,10 +809,10 @@
                         </div>
                         
                         <div class="flex gap-3">
-                            <button onclick="logCustomService()" class="flex-1 bg-green-600 text-white p-4 rounded-2xl font-bold hover:bg-green-700">
+                            <button onclick="logCustomService()" class="flex-1 bg-green-600 text-white p-4 rounded-2xl font-bold hover:bg-green-700 transition">
                                 ${i18n[lang].logCustomService}
                             </button>
-                            <button onclick="closeCustomServiceModal()" class="flex-1 bg-gray-200 p-4 rounded-2xl font-bold hover:bg-gray-300">
+                            <button onclick="closeCustomServiceModal()" class="flex-1 bg-gray-200 p-4 rounded-2xl font-bold hover:bg-gray-300 transition">
                                 ${i18n[lang].cancel}
                             </button>
                         </div>
@@ -707,7 +820,6 @@
                 </div>
             `;
             
-            // Add modal to body
             const modalContainer = document.createElement('div');
             modalContainer.innerHTML = modalHtml;
             document.body.appendChild(modalContainer.firstChild);
@@ -747,12 +859,12 @@
                     barberId: barberId,
                     barberName: barber?.name || barber?.email?.split('@')[0] || 'Unknown',
                     serviceId: 'custom',
-                    serviceNameEn: lang === 'en' ? serviceName : 'Custom Service',
-                    serviceNameAr: lang === 'ar' ? serviceName : 'خدمة مخصصة',
+                    serviceNameEn: 'Custom Service',
+                    serviceNameAr: 'خدمة مخصصة',
+                    customServiceName: serviceName,
                     price: price,
                     customers: customers,
                     isCustomService: true,
-                    customServiceName: serviceName,
                     timestamp: serverTimestamp(),
                     date: new Date().toISOString().split('T')[0],
                     loggedBy: currentUser.uid,
@@ -772,6 +884,7 @@
         function renderServices() {
             let html = '';
             
+            // Only show barber selector for cashiers and admins
             if (userRole === 'cashier' || userRole === 'admin') {
                 html += `
                     <div class="mb-4">
@@ -792,7 +905,7 @@
                 <div class="mb-6 custom-service-card border-2 border-dashed border-blue-300 rounded-3xl p-6 bg-blue-50">
                     <div class="text-center">
                         <span class="text-4xl mb-3 block">✨</span>
-                        <h3 class="text-xl font-bold mb-2" data-i18n="customService">Custom Service</h3>
+                        <h3 class="text-xl font-bold mb-2 text-gray-800" data-i18n="customService">Custom Service</h3>
                         <p class="text-gray-600 mb-4" data-i18n="customServiceDesc">Service not in list? Enter custom price</p>
                         <button onclick="showCustomServiceModal()" class="bg-blue-600 text-white px-8 py-3 rounded-2xl font-bold hover:bg-blue-700 transition">
                             ${i18n[lang].logCustomService}
@@ -800,7 +913,7 @@
                     </div>
                 </div>
                 
-                <h3 class="font-bold text-xl mb-4" data-i18n="services">Regular Services</h3>
+                <h3 class="font-bold text-xl mb-4 text-gray-700" data-i18n="services">Regular Services</h3>
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
             `;
 
@@ -809,18 +922,28 @@
                     <button onclick="logService('${service.id}')" 
                         class="service-btn bg-white border-2 border-gray-100 p-4 rounded-2xl shadow-sm hover:border-blue-500 hover:shadow-md text-center">
                         <span class="text-3xl mb-1 block">${service.icon || '✂️'}</span>
-                        <span class="block font-bold text-sm">${lang === 'en' ? service.nameEn : service.nameAr}</span>
+                        <span class="block font-bold text-sm text-gray-800">${lang === 'en' ? service.nameEn : service.nameAr}</span>
                         <span class="text-blue-600 font-bold mt-1 block">$${service.price}</span>
                     </button>
                 `;
             });
 
-            html += `</div><div class="mt-8">
-                <h3 class="font-bold text-lg mb-4" data-i18n="recentLogs">Recent Logs</h3>
+            html += `</div>`;
+
+            // Recent logs - show based on role
+            html += `<div class="mt-8">
+                <h3 class="font-bold text-lg mb-4 text-gray-700" data-i18n="recentLogs">Recent Logs</h3>
                 <div class="space-y-2 max-h-96 overflow-y-auto">
             `;
 
-            transactions.slice(0, 10).forEach(t => {
+            let recentTransactions;
+            if (userRole === 'barber') {
+                recentTransactions = transactions.filter(t => t.barberId === currentUser.uid).slice(0, 10);
+            } else {
+                recentTransactions = transactions.slice(0, 10);
+            }
+
+            recentTransactions.forEach(t => {
                 const barberName = t.barberName || 'Unknown';
                 let serviceName;
                 if (t.isCustomService) {
@@ -831,17 +954,22 @@
                 const date = t.timestamp?.toDate ? t.timestamp.toDate().toLocaleString() : new Date().toLocaleString();
                 
                 html += `
-                    <div class="bg-gray-50 p-3 rounded-xl border text-sm">
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 text-sm">
                         <div class="flex justify-between">
-                            <span class="font-bold">${serviceName} ${t.isCustomService ? '(✨)' : ''}</span>
-                            <span class="text-blue-600">$${t.price}</span>
+                            <span class="font-bold text-gray-800">${serviceName} ${t.isCustomService ? '(✨)' : ''}</span>
+                            <span class="text-blue-600 font-bold">$${t.price}</span>
                         </div>
-                        <div class="text-xs text-gray-500 mt-1">
-                            ${barberName} - ${date}
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>${barberName}</span>
+                            <span>${date}</span>
                         </div>
                     </div>
                 `;
             });
+
+            if (recentTransactions.length === 0) {
+                html += `<div class="text-center text-gray-500 py-8" data-i18n="noData">No data available</div>`;
+            }
 
             html += `</div></div>`;
             document.getElementById('services-content').innerHTML = html;
@@ -894,6 +1022,7 @@
         function renderActivityLogs() {
             let filteredTransactions = [...transactions];
             
+            // Apply filters
             if (filterBarber !== 'all') {
                 filteredTransactions = filteredTransactions.filter(t => t.barberId === filterBarber);
             }
@@ -904,50 +1033,69 @@
                 filteredTransactions = filteredTransactions.filter(t => t.date <= filterDateEnd);
             }
 
+            // If barber, only show their own
+            if (userRole === 'barber') {
+                filteredTransactions = filteredTransactions.filter(t => t.barberId === currentUser.uid);
+            }
+
             const barberOptions = barbers.map(b => 
                 `<option value="${b.uid}" ${filterBarber === b.uid ? 'selected' : ''}>${b.name || b.email.split('@')[0]}</option>`
             ).join('');
 
             let html = `
                 <div class="space-y-6">
-                    <h2 class="text-2xl font-bold" data-i18n="activityLogs">Activity Logs</h2>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border">
-                        <h3 class="font-bold mb-4" data-i18n="filters">Filters</h3>
+                    <h2 class="text-2xl font-bold text-gray-800" data-i18n="activityLogs">Activity Logs</h2>
+                    
+                    <!-- Filters - Show all filters for admin/cashier, limited for barber -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-lg mb-4 text-gray-700" data-i18n="filters">Filters</h3>
                         <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm mb-1" data-i18n="barber">Barber</label>
-                                <select id="filter-barber" class="w-full p-3 border rounded-xl">
-                                    <option value="all" ${filterBarber === 'all' ? 'selected' : ''} data-i18n="allBarbers">All Barbers</option>
-                                    ${barberOptions}
-                                </select>
-                            </div>
+            `;
+
+            // Barber filter - only for admin/cashier
+            if (userRole !== 'barber') {
+                html += `
+                    <div>
+                        <label class="block text-sm mb-1 text-gray-600" data-i18n="barber">Barber</label>
+                        <select id="filter-barber" class="w-full p-3 border rounded-xl bg-white">
+                            <option value="all" ${filterBarber === 'all' ? 'selected' : ''} data-i18n="allBarbers">All Barbers</option>
+                            ${barberOptions}
+                        </select>
+                    </div>
+                `;
+            }
+
+            // Date filters - for everyone
+            html += `
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label class="block text-sm mb-1" data-i18n="startDate">Start Date</label>
+                                    <label class="block text-sm mb-1 text-gray-600" data-i18n="startDate">Start Date</label>
                                     <input type="date" id="filter-start" value="${filterDateStart}" class="w-full p-3 border rounded-xl">
                                 </div>
                                 <div>
-                                    <label class="block text-sm mb-1" data-i18n="endDate">End Date</label>
+                                    <label class="block text-sm mb-1 text-gray-600" data-i18n="endDate">End Date</label>
                                     <input type="date" id="filter-end" value="${filterDateEnd}" class="w-full p-3 border rounded-xl">
                                 </div>
                             </div>
                             <div class="flex gap-3">
-                                <button onclick="applyFilters()" class="flex-1 bg-blue-600 text-white p-3 rounded-xl font-bold" data-i18n="filter">Filter</button>
-                                <button onclick="resetFilters()" class="flex-1 bg-gray-200 p-3 rounded-xl font-bold" data-i18n="reset">Reset</button>
+                                <button onclick="applyFilters()" class="flex-1 bg-blue-600 text-white p-3 rounded-xl font-bold hover:bg-blue-700 transition" data-i18n="filter">Apply Filters</button>
+                                <button onclick="resetFilters()" class="flex-1 bg-gray-200 p-3 rounded-xl font-bold hover:bg-gray-300 transition" data-i18n="reset">Reset Filters</button>
                             </div>
                         </div>
                     </div>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border">
-                        <h3 class="font-bold mb-4" data-i18n="serviceLogs">Service Logs</h3>
+
+                    <!-- Logs Table -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-lg mb-4 text-gray-700" data-i18n="serviceLogs">Service Logs</h3>
                         <div class="overflow-x-auto">
                             <table class="w-full text-sm">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th class="p-3 text-left" data-i18n="dateTime">Date & Time</th>
-                                        <th class="p-3 text-left" data-i18n="barber">Barber</th>
-                                        <th class="p-3 text-left" data-i18n="service">Service</th>
-                                        <th class="p-3 text-right" data-i18n="price">Price</th>
-                                        <th class="p-3 text-right" data-i18n="customers">Customers</th>
+                                        <th class="p-3 text-left text-gray-600" data-i18n="dateTime">Date & Time</th>
+                                        <th class="p-3 text-left text-gray-600" data-i18n="barber">Barber</th>
+                                        <th class="p-3 text-left text-gray-600" data-i18n="service">Service</th>
+                                        <th class="p-3 text-right text-gray-600" data-i18n="price">Price</th>
+                                        <th class="p-3 text-right text-gray-600" data-i18n="customers">Customers</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -962,12 +1110,12 @@
                     serviceName = lang === 'en' ? t.serviceNameEn : t.serviceNameAr;
                 }
                 html += `
-                    <tr class="border-b">
-                        <td class="p-3">${date}</td>
-                        <td class="p-3 font-medium">${t.barberName}</td>
-                        <td class="p-3">${serviceName} ${t.isCustomService ? '✨' : ''}</td>
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="p-3 text-gray-600">${date}</td>
+                        <td class="p-3 font-medium text-gray-800">${t.barberName}</td>
+                        <td class="p-3 text-gray-600">${serviceName} ${t.isCustomService ? '✨' : ''}</td>
                         <td class="p-3 text-right text-blue-600 font-bold">$${t.price}</td>
-                        <td class="p-3 text-right">${t.customers || 1}</td>
+                        <td class="p-3 text-right text-gray-600">${t.customers || 1}</td>
                     </tr>
                 `;
             });
@@ -980,8 +1128,9 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="mt-4 text-sm text-gray-500">
-                            Showing ${Math.min(filteredTransactions.length, 50)} of ${filteredTransactions.length} records
+                        <div class="mt-4 text-sm text-gray-500 flex justify-between items-center">
+                            <span>Showing ${Math.min(filteredTransactions.length, 50)} of ${filteredTransactions.length} records</span>
+                            <span class="text-blue-600 font-bold">Total: $${filteredTransactions.reduce((sum, t) => sum + (t.price || 0), 0)}</span>
                         </div>
                     </div>
                 </div>
@@ -992,7 +1141,9 @@
         }
 
         window.applyFilters = () => {
-            filterBarber = document.getElementById('filter-barber').value;
+            if (userRole !== 'barber') {
+                filterBarber = document.getElementById('filter-barber').value;
+            }
             filterDateStart = document.getElementById('filter-start').value;
             filterDateEnd = document.getElementById('filter-end').value;
             renderActivityLogs();
@@ -1007,12 +1158,27 @@
 
         // ============== REPORTS ==============
         function renderReports() {
+            // Apply date filter
             let filtered = transactions.filter(t => t.date >= reportStartDate && t.date <= reportEndDate);
+            
+            // Apply barber filter if selected
+            let reportBarberFilter = document.getElementById('report-barber-filter')?.value || 'all';
+            if (reportBarberFilter !== 'all') {
+                filtered = filtered.filter(t => t.barberId === reportBarberFilter);
+            }
 
+            // If barber, only show their own
+            if (userRole === 'barber') {
+                filtered = filtered.filter(t => t.barberId === currentUser.uid);
+            }
+
+            // Calculate totals
             const totalRevenue = filtered.reduce((sum, t) => sum + (t.price || 0), 0);
             const totalCustomers = filtered.reduce((sum, t) => sum + (t.customers || 1), 0);
             const totalServices = filtered.length;
+            const avgTicket = totalServices > 0 ? (totalRevenue / totalServices).toFixed(2) : 0;
 
+            // Barber performance
             const barberStats = {};
             filtered.forEach(t => {
                 if (!barberStats[t.barberId]) {
@@ -1028,6 +1194,7 @@
                 barberStats[t.barberId].customers += t.customers || 1;
             });
 
+            // Service statistics
             const serviceStats = {};
             filtered.forEach(t => {
                 let key;
@@ -1054,59 +1221,104 @@
                 serviceStats[key].revenue += t.price || 0;
             });
 
+            // Daily sales
             const dailySales = {};
             filtered.forEach(t => {
                 if (!dailySales[t.date]) {
-                    dailySales[t.date] = { revenue: 0, customers: 0 };
+                    dailySales[t.date] = { revenue: 0, customers: 0, services: 0 };
                 }
                 dailySales[t.date].revenue += t.price || 0;
                 dailySales[t.date].customers += t.customers || 1;
+                dailySales[t.date].services++;
             });
 
             const sortedDays = Object.keys(dailySales).sort().reverse();
 
+            // Monthly sales
+            const monthlySales = {};
+            filtered.forEach(t => {
+                const month = t.date.substring(0, 7); // YYYY-MM
+                if (!monthlySales[month]) {
+                    monthlySales[month] = { revenue: 0, customers: 0, services: 0 };
+                }
+                monthlySales[month].revenue += t.price || 0;
+                monthlySales[month].customers += t.customers || 1;
+                monthlySales[month].services++;
+            });
+
+            const sortedMonths = Object.keys(monthlySales).sort().reverse();
+
+            const barberOptions = barbers.map(b => 
+                `<option value="${b.uid}">${b.name || b.email.split('@')[0]}</option>`
+            ).join('');
+
             let html = `
                 <div class="space-y-6">
-                    <h2 class="text-2xl font-bold" data-i18n="reports">Reports</h2>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border">
-                        <h3 class="font-bold mb-4" data-i18n="dateRange">Date Range</h3>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm mb-1" data-i18n="startDate">Start Date</label>
-                                <input type="date" id="report-start" value="${reportStartDate}" class="w-full p-3 border rounded-xl">
+                    <h2 class="text-2xl font-bold text-gray-800" data-i18n="reports">Reports</h2>
+                    
+                    <!-- Date Range and Filters -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-lg mb-4 text-gray-700" data-i18n="filters">Filters</h3>
+                        <div class="space-y-4">
+                            ${userRole !== 'barber' ? `
+                                <div>
+                                    <label class="block text-sm mb-1 text-gray-600" data-i18n="barber">Barber</label>
+                                    <select id="report-barber-filter" class="w-full p-3 border rounded-xl bg-white">
+                                        <option value="all" data-i18n="allBarbers">All Barbers</option>
+                                        ${barberOptions}
+                                    </select>
+                                </div>
+                            ` : ''}
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm mb-1 text-gray-600" data-i18n="startDate">Start Date</label>
+                                    <input type="date" id="report-start" value="${reportStartDate}" class="w-full p-3 border rounded-xl">
+                                </div>
+                                <div>
+                                    <label class="block text-sm mb-1 text-gray-600" data-i18n="endDate">End Date</label>
+                                    <input type="date" id="report-end" value="${reportEndDate}" class="w-full p-3 border rounded-xl">
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-sm mb-1" data-i18n="endDate">End Date</label>
-                                <input type="date" id="report-end" value="${reportEndDate}" class="w-full p-3 border rounded-xl">
+                            <div class="flex gap-3">
+                                <button onclick="generateReport()" class="flex-1 bg-blue-600 text-white p-3 rounded-xl font-bold hover:bg-blue-700 transition" data-i18n="generateReports">Generate Reports</button>
+                                <button onclick="exportToCSV()" class="flex-1 bg-green-600 text-white p-3 rounded-xl font-bold hover:bg-green-700 transition" data-i18n="exportCSV">Export to CSV</button>
                             </div>
                         </div>
-                        <button onclick="generateReport()" class="w-full mt-4 bg-blue-600 text-white p-3 rounded-xl font-bold" data-i18n="generateReports">
-                            Generate Reports
-                        </button>
                     </div>
-                    <div class="grid grid-cols-3 gap-4">
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border text-center">
+
+                    <!-- Summary Cards -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 text-center">
                             <div class="text-2xl font-bold text-blue-600">$${totalRevenue}</div>
                             <div class="text-sm text-gray-600" data-i18n="totalRevenue">Total Revenue</div>
                         </div>
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border text-center">
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 text-center">
                             <div class="text-2xl font-bold text-green-600">${totalCustomers}</div>
                             <div class="text-sm text-gray-600" data-i18n="totalCustomers">Total Customers</div>
                         </div>
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border text-center">
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 text-center">
                             <div class="text-2xl font-bold text-purple-600">${totalServices}</div>
                             <div class="text-sm text-gray-600" data-i18n="totalServices">Total Services</div>
                         </div>
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 text-center">
+                            <div class="text-2xl font-bold text-orange-600">$${avgTicket}</div>
+                            <div class="text-sm text-gray-600" data-i18n="average">Avg Ticket</div>
+                        </div>
                     </div>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border">
-                        <h3 class="font-bold mb-4" data-i18n="barberPerformance">Barber Performance</h3>
+
+                    <!-- Barber Performance -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-lg mb-4 text-gray-700" data-i18n="barberPerformance">Barber Performance</h3>
                         <div class="space-y-3">
             `;
 
-            Object.values(barberStats).forEach(b => {
+            // Sort barbers by revenue
+            const sortedBarbers = Object.values(barberStats).sort((a, b) => b.revenue - a.revenue);
+            
+            sortedBarbers.forEach(b => {
                 html += `
-                    <div class="flex justify-between items-center border-b pb-2">
-                        <span class="font-medium">${b.name}</span>
+                    <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                        <span class="font-medium text-gray-800">${b.name}</span>
                         <div class="text-right">
                             <span class="text-blue-600 font-bold">$${b.revenue}</span>
                             <span class="text-gray-500 text-sm ml-2">(${b.services} services, ${b.customers} cust)</span>
@@ -1115,22 +1327,27 @@
                 `;
             });
 
-            if (Object.keys(barberStats).length === 0) {
+            if (sortedBarbers.length === 0) {
                 html += `<div class="text-gray-500 text-center py-4" data-i18n="noData">No data available</div>`;
             }
 
             html += `
                         </div>
                     </div>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border">
-                        <h3 class="font-bold mb-4" data-i18n="serviceStatistics">Service Statistics</h3>
+
+                    <!-- Service Statistics -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-lg mb-4 text-gray-700" data-i18n="serviceStatistics">Service Statistics</h3>
                         <div class="space-y-3 max-h-80 overflow-y-auto">
             `;
 
-            Object.values(serviceStats).forEach(s => {
+            // Sort services by revenue
+            const sortedServices = Object.values(serviceStats).sort((a, b) => b.revenue - a.revenue);
+            
+            sortedServices.forEach(s => {
                 html += `
-                    <div class="flex justify-between items-center border-b pb-2">
-                        <span class="font-medium">${s.name} ${s.isCustom ? '✨' : ''}</span>
+                    <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                        <span class="font-medium text-gray-800">${s.name} ${s.isCustom ? '✨' : ''}</span>
                         <div class="text-right">
                             <span class="text-blue-600 font-bold">$${s.revenue}</span>
                             <span class="text-gray-500 text-sm ml-2">(${s.count}x)</span>
@@ -1139,31 +1356,59 @@
                 `;
             });
 
-            if (Object.keys(serviceStats).length === 0) {
+            if (sortedServices.length === 0) {
                 html += `<div class="text-gray-500 text-center py-4" data-i18n="noData">No data available</div>`;
             }
 
             html += `
                         </div>
                     </div>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border">
-                        <h3 class="font-bold mb-4" data-i18n="dailySales">Daily Sales</h3>
+
+                    <!-- Daily Sales Report -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-lg mb-4 text-gray-700" data-i18n="dailySales">Daily Sales Report</h3>
                         <div class="space-y-3 max-h-80 overflow-y-auto">
             `;
 
             sortedDays.forEach(day => {
                 html += `
-                    <div class="flex justify-between items-center border-b pb-2">
-                        <span class="font-medium">${day}</span>
+                    <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                        <span class="font-medium text-gray-800">${day}</span>
                         <div class="text-right">
                             <span class="text-blue-600 font-bold">$${dailySales[day].revenue}</span>
-                            <span class="text-gray-500 text-sm ml-2">(${dailySales[day].customers} cust)</span>
+                            <span class="text-gray-500 text-sm ml-2">(${dailySales[day].services} services, ${dailySales[day].customers} cust)</span>
                         </div>
                     </div>
                 `;
             });
 
             if (sortedDays.length === 0) {
+                html += `<div class="text-gray-500 text-center py-4" data-i18n="noData">No data available</div>`;
+            }
+
+            html += `
+                        </div>
+                    </div>
+
+                    <!-- Monthly Sales Report -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-lg mb-4 text-gray-700" data-i18n="monthlySales">Monthly Sales Report</h3>
+                        <div class="space-y-3 max-h-80 overflow-y-auto">
+            `;
+
+            sortedMonths.forEach(month => {
+                html += `
+                    <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                        <span class="font-medium text-gray-800">${month}</span>
+                        <div class="text-right">
+                            <span class="text-blue-600 font-bold">$${monthlySales[month].revenue}</span>
+                            <span class="text-gray-500 text-sm ml-2">(${monthlySales[month].services} services, ${monthlySales[month].customers} cust)</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (sortedMonths.length === 0) {
                 html += `<div class="text-gray-500 text-center py-4" data-i18n="noData">No data available</div>`;
             }
 
@@ -1183,39 +1428,71 @@
             renderReports();
         };
 
-        // ============== USER MANAGEMENT ==============
+        window.exportToCSV = () => {
+            // Get current filtered data
+            let filtered = transactions.filter(t => t.date >= reportStartDate && t.date <= reportEndDate);
+            
+            let csvContent = "Date,Time,Barber,Service,Price,Customers\n";
+            
+            filtered.forEach(t => {
+                const date = t.timestamp?.toDate ? t.timestamp.toDate().toLocaleString() : t.date;
+                const [datePart, timePart] = date.split(', ');
+                const serviceName = t.isCustomService ? (t.customServiceName || 'Custom') : (lang === 'en' ? t.serviceNameEn : t.serviceNameAr);
+                
+                csvContent += `"${datePart}","${timePart || ''}","${t.barberName}","${serviceName}","${t.price}","${t.customers || 1}"\n`;
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `barber-report-${reportStartDate}-to-${reportEndDate}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        };
+
+        // ============== USER MANAGEMENT (ADMIN ONLY) ==============
         function renderUserManagement() {
+            if (userRole !== 'admin') {
+                showPanel('dashboard');
+                return;
+            }
+
             let html = `
                 <div class="space-y-6">
-                    <h2 class="text-2xl font-bold" data-i18n="userManagement">User Management</h2>
-                    <div class="bg-blue-50 p-6 rounded-3xl border">
-                        <h3 class="font-bold mb-4" data-i18n="addUser">Add User</h3>
+                    <h2 class="text-2xl font-bold text-gray-800" data-i18n="userManagement">User Management</h2>
+                    
+                    <!-- Add User Form -->
+                    <div class="bg-blue-50 p-6 rounded-3xl border border-blue-100">
+                        <h3 class="font-bold text-lg mb-4 text-gray-700" data-i18n="addUser">Add New User</h3>
                         <div class="space-y-3">
-                            <input type="text" id="new-user-name" placeholder="${i18n[lang].fullName}" class="w-full p-3 border rounded-xl">
-                            <input type="email" id="new-user-email" placeholder="${i18n[lang].email}" class="w-full p-3 border rounded-xl">
-                            <input type="password" id="new-user-password" placeholder="${i18n[lang].password}" class="w-full p-3 border rounded-xl">
-                            <input type="password" id="new-user-confirm" placeholder="${i18n[lang].confirmPassword}" class="w-full p-3 border rounded-xl">
+                            <input type="text" id="new-user-name" placeholder="${i18n[lang].fullName}" class="w-full p-3 border rounded-xl bg-white">
+                            <input type="email" id="new-user-email" placeholder="${i18n[lang].email}" class="w-full p-3 border rounded-xl bg-white">
+                            <input type="password" id="new-user-password" placeholder="${i18n[lang].password}" class="w-full p-3 border rounded-xl bg-white">
+                            <input type="password" id="new-user-confirm" placeholder="${i18n[lang].confirmPassword}" class="w-full p-3 border rounded-xl bg-white">
                             <select id="new-user-role" class="w-full p-3 border rounded-xl bg-white">
                                 <option value="barber" data-i18n="barber">Barber</option>
                                 <option value="cashier" data-i18n="cashier">Cashier</option>
                                 <option value="admin" data-i18n="admin">Admin</option>
                             </select>
-                            <button onclick="addNewUser()" class="w-full bg-blue-600 text-white p-3 rounded-xl font-bold">
+                            <button onclick="addNewUser()" class="w-full bg-blue-600 text-white p-3 rounded-xl font-bold hover:bg-blue-700 transition">
                                 ${i18n[lang].addUser}
                             </button>
                         </div>
                     </div>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border">
-                        <h3 class="font-bold mb-4" data-i18n="allUsers">All Users</h3>
+
+                    <!-- Users List -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-lg mb-4 text-gray-700" data-i18n="allUsers">All Users</h3>
                         <div class="overflow-x-auto">
                             <table class="w-full text-sm">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th class="p-3 text-left" data-i18n="username">Username</th>
-                                        <th class="p-3 text-left" data-i18n="fullName">Full Name</th>
-                                        <th class="p-3 text-left" data-i18n="role">Role</th>
-                                        <th class="p-3 text-left" data-i18n="createdAt">Created At</th>
-                                        <th class="p-3 text-left" data-i18n="actions">Actions</th>
+                                        <th class="p-3 text-left text-gray-600" data-i18n="username">Username</th>
+                                        <th class="p-3 text-left text-gray-600" data-i18n="fullName">Full Name</th>
+                                        <th class="p-3 text-left text-gray-600" data-i18n="role">Role</th>
+                                        <th class="p-3 text-left text-gray-600" data-i18n="createdAt">Created At</th>
+                                        <th class="p-3 text-left text-gray-600" data-i18n="actions">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1224,13 +1501,13 @@
             allUsers.forEach(user => {
                 const created = user.createdAt?.toDate ? user.createdAt.toDate().toLocaleDateString() : 'N/A';
                 html += `
-                    <tr class="border-b">
-                        <td class="p-3">${user.email?.split('@')[0] || 'N/A'}</td>
-                        <td class="p-3">${user.name || '-'}</td>
+                    <tr class="border-b border-gray-100">
+                        <td class="p-3 text-gray-800">${user.email?.split('@')[0] || 'N/A'}</td>
+                        <td class="p-3 text-gray-600">${user.name || '-'}</td>
                         <td class="p-3"><span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">${user.role}</span></td>
-                        <td class="p-3">${created}</td>
+                        <td class="p-3 text-gray-600">${created}</td>
                         <td class="p-3">
-                            <button onclick="deleteUser('${user.uid}')" class="text-red-600 text-sm" data-i18n="delete">Delete</button>
+                            <button onclick="deleteUser('${user.uid}')" class="text-red-600 text-sm hover:text-red-800" data-i18n="delete">Delete</button>
                         </td>
                     </tr>
                 `;
@@ -1249,6 +1526,11 @@
         }
 
         window.addNewUser = async () => {
+            if (userRole !== 'admin') {
+                alert(i18n[lang].unauthorized);
+                return;
+            }
+
             const name = document.getElementById('new-user-name').value;
             const email = document.getElementById('new-user-email').value;
             const password = document.getElementById('new-user-password').value;
@@ -1289,7 +1571,12 @@
         };
 
         window.deleteUser = async (userId) => {
+            if (userRole !== 'admin') {
+                alert(i18n[lang].unauthorized);
+                return;
+            }
             if (!confirm(i18n[lang].confirmDelete)) return;
+            
             try {
                 await deleteDoc(doc(db, "users", userId));
             } catch (error) {
@@ -1298,33 +1585,42 @@
             }
         };
 
-        // ============== SERVICE MANAGEMENT ==============
+        // ============== SERVICE MANAGEMENT (ADMIN ONLY) ==============
         function renderServiceManagement() {
+            if (userRole !== 'admin') {
+                showPanel('dashboard');
+                return;
+            }
+
             let html = `
                 <div class="space-y-6">
-                    <h2 class="text-2xl font-bold" data-i18n="serviceManagement">Service Management</h2>
-                    <div class="bg-green-50 p-6 rounded-3xl border">
-                        <h3 class="font-bold mb-4" data-i18n="addService">Add Service</h3>
+                    <h2 class="text-2xl font-bold text-gray-800" data-i18n="serviceManagement">Service Management</h2>
+                    
+                    <!-- Add Service Form -->
+                    <div class="bg-green-50 p-6 rounded-3xl border border-green-100">
+                        <h3 class="font-bold text-lg mb-4 text-gray-700" data-i18n="addService">Add New Service</h3>
                         <div class="space-y-3">
-                            <input type="text" id="new-service-en" placeholder="${i18n[lang].serviceNameEn}" class="w-full p-3 border rounded-xl">
-                            <input type="text" id="new-service-ar" placeholder="${i18n[lang].serviceNameAr}" class="w-full p-3 border rounded-xl">
-                            <input type="number" id="new-service-price" placeholder="${i18n[lang].price}" class="w-full p-3 border rounded-xl">
-                            <input type="text" id="new-service-icon" placeholder="${i18n[lang].icon}" value="✂️" class="w-full p-3 border rounded-xl">
-                            <button onclick="addNewService()" class="w-full bg-green-600 text-white p-3 rounded-xl font-bold">
+                            <input type="text" id="new-service-en" placeholder="${i18n[lang].serviceNameEn}" class="w-full p-3 border rounded-xl bg-white">
+                            <input type="text" id="new-service-ar" placeholder="${i18n[lang].serviceNameAr}" class="w-full p-3 border rounded-xl bg-white">
+                            <input type="number" id="new-service-price" placeholder="${i18n[lang].price}" class="w-full p-3 border rounded-xl bg-white">
+                            <input type="text" id="new-service-icon" placeholder="${i18n[lang].icon}" value="✂️" class="w-full p-3 border rounded-xl bg-white">
+                            <button onclick="addNewService()" class="w-full bg-green-600 text-white p-3 rounded-xl font-bold hover:bg-green-700 transition">
                                 ${i18n[lang].addService}
                             </button>
                         </div>
                     </div>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border">
-                        <h3 class="font-bold mb-4" data-i18n="allServices">All Services</h3>
+
+                    <!-- Services List -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-lg mb-4 text-gray-700" data-i18n="allServices">All Services</h3>
                         <div class="overflow-x-auto">
                             <table class="w-full text-sm">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th class="p-3 text-left" data-i18n="serviceName">Service Name</th>
-                                        <th class="p-3 text-left" data-i18n="price">Price</th>
-                                        <th class="p-3 text-left" data-i18n="createdAt">Created At</th>
-                                        <th class="p-3 text-left" data-i18n="actions">Actions</th>
+                                        <th class="p-3 text-left text-gray-600" data-i18n="serviceName">Service Name</th>
+                                        <th class="p-3 text-left text-gray-600" data-i18n="price">Price</th>
+                                        <th class="p-3 text-left text-gray-600" data-i18n="createdAt">Created At</th>
+                                        <th class="p-3 text-left text-gray-600" data-i18n="actions">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1333,12 +1629,12 @@
             services.forEach(service => {
                 const created = service.createdAt?.toDate ? service.createdAt.toDate().toLocaleDateString() : 'N/A';
                 html += `
-                    <tr class="border-b">
-                        <td class="p-3">${service.icon || '✂️'} ${lang === 'en' ? service.nameEn : service.nameAr}</td>
+                    <tr class="border-b border-gray-100">
+                        <td class="p-3 text-gray-800">${service.icon || '✂️'} ${lang === 'en' ? service.nameEn : service.nameAr}</td>
                         <td class="p-3 font-bold text-blue-600">$${service.price}</td>
-                        <td class="p-3">${created}</td>
+                        <td class="p-3 text-gray-600">${created}</td>
                         <td class="p-3">
-                            <button onclick="deleteService('${service.id}')" class="text-red-600 text-sm" data-i18n="delete">Delete</button>
+                            <button onclick="deleteService('${service.id}')" class="text-red-600 text-sm hover:text-red-800" data-i18n="delete">Delete</button>
                         </td>
                     </tr>
                 `;
@@ -1357,6 +1653,11 @@
         }
 
         window.addNewService = async () => {
+            if (userRole !== 'admin') {
+                alert(i18n[lang].unauthorized);
+                return;
+            }
+
             const nameEn = document.getElementById('new-service-en').value;
             const nameAr = document.getElementById('new-service-ar').value;
             const price = parseFloat(document.getElementById('new-service-price').value);
@@ -1389,7 +1690,12 @@
         };
 
         window.deleteService = async (serviceId) => {
+            if (userRole !== 'admin') {
+                alert(i18n[lang].unauthorized);
+                return;
+            }
             if (!confirm(i18n[lang].confirmDelete)) return;
+            
             try {
                 await deleteDoc(doc(db, "services", serviceId));
             } catch (error) {
@@ -1398,8 +1704,12 @@
             }
         };
 
-        // ============== FACTORY RESET ==============
+        // ============== FACTORY RESET (ADMIN ONLY) ==============
         window.factoryReset = async () => {
+            if (userRole !== 'admin') {
+                alert(i18n[lang].unauthorized);
+                return;
+            }
             if (!confirm(i18n[lang].confirmReset)) return;
 
             try {
@@ -1474,7 +1784,7 @@
             <!-- Setup Card -->
             <div id="setup-card" class="hidden">
                 <div class="bg-white p-8 rounded-[2.5rem] card-shadow border-t-8 border-blue-600 max-w-md mx-auto">
-                    <h2 class="text-3xl font-bold mb-2 text-center" data-i18n="setupTitle">Register as First Admin</h2>
+                    <h2 class="text-3xl font-bold mb-2 text-center text-gray-800" data-i18n="setupTitle">Register as First Admin</h2>
                     <p class="text-gray-600 text-center mb-6" data-i18n="setupDesc">No admin exists yet. Register to become the system administrator.</p>
                     
                     <input type="email" id="setup-email" data-i18n="email" placeholder="Email Address" class="w-full mb-4 p-4 border rounded-2xl bg-gray-50">
@@ -1496,7 +1806,7 @@
             <!-- Login Card -->
             <div id="login-card" class="hidden">
                 <div class="bg-white p-8 rounded-[2.5rem] card-shadow border max-w-md mx-auto">
-                    <h2 class="text-3xl font-bold mb-8 text-center" data-i18n="login">Login</h2>
+                    <h2 class="text-3xl font-bold mb-8 text-center text-gray-800" data-i18n="login">Login</h2>
                     
                     <input type="email" id="login-email" data-i18n="email" placeholder="Email Address" class="w-full mb-4 p-4 border rounded-2xl bg-gray-50">
                     <input type="password" id="login-password" data-i18n="password" placeholder="Password" class="w-full mb-8 p-4 border rounded-2xl bg-gray-50">
@@ -1516,34 +1826,34 @@
 
         <!-- App View -->
         <div id="app-view" class="hidden space-y-6">
-            <!-- Navigation -->
+            <!-- Navigation Tabs -->
             <div class="bg-white p-2 rounded-2xl shadow-sm flex gap-2 overflow-x-auto">
-                <button onclick="showPanel('dashboard')" class="flex-1 py-3 px-4 rounded-xl font-bold text-blue-600 bg-blue-50 whitespace-nowrap">
+                <button id="tab-dashboard" onclick="showPanel('dashboard')" class="nav-tab flex-1 py-3 px-4 rounded-xl font-bold text-blue-600 bg-blue-50 whitespace-nowrap">
                     📊 <span data-i18n="dashboard">Dashboard</span>
                 </button>
-                <button onclick="showPanel('services')" class="flex-1 py-3 px-4 rounded-xl font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap">
+                <button id="tab-services" onclick="showPanel('services')" class="nav-tab flex-1 py-3 px-4 rounded-xl font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap">
                     ✂️ <span data-i18n="logService">Log Service</span>
                 </button>
-                <button onclick="showPanel('activity')" class="flex-1 py-3 px-4 rounded-xl font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap">
+                <button id="tab-activity" onclick="showPanel('activity')" class="nav-tab flex-1 py-3 px-4 rounded-xl font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap">
                     📋 <span data-i18n="activityLogs">Activity</span>
                 </button>
-                <button onclick="showPanel('reports')" class="flex-1 py-3 px-4 rounded-xl font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap">
+                <button id="tab-reports" onclick="showPanel('reports')" class="nav-tab flex-1 py-3 px-4 rounded-xl font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap">
                     📊 <span data-i18n="reports">Reports</span>
                 </button>
-                <button id="admin-tab" onclick="showPanel('users')" class="flex-1 py-3 px-4 rounded-xl font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap hidden">
+                <button id="tab-users" onclick="showPanel('users')" class="nav-tab admin-users-tab flex-1 py-3 px-4 rounded-xl font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap hidden">
                     👥 <span data-i18n="users">Users</span>
                 </button>
-                <button id="admin-tab2" onclick="showPanel('services-mgmt')" class="flex-1 py-3 px-4 rounded-xl font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap hidden">
+                <button id="tab-services-mgmt" onclick="showPanel('services-mgmt')" class="nav-tab admin-services-tab flex-1 py-3 px-4 rounded-xl font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap hidden">
                     ⚙️ <span data-i18n="services">Services</span>
                 </button>
-                <button id="admin-tab3" onclick="showPanel('reset')" class="flex-1 py-3 px-4 rounded-xl font-bold text-red-600 hover:bg-red-50 whitespace-nowrap hidden">
+                <button id="tab-reset" onclick="showPanel('reset')" class="nav-tab admin-reset-tab flex-1 py-3 px-4 rounded-xl font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap hidden">
                     🔄 <span data-i18n="factoryReset">Reset</span>
                 </button>
             </div>
 
             <!-- Panels -->
             <div id="dashboard-panel" class="hidden"><div id="dashboard-content"></div></div>
-            <div id="services-panel" class="hidden bg-white p-6 rounded-[2.5rem] card-shadow border"><div id="services-content"></div></div>
+            <div id="services-panel" class="hidden bg-white p-6 rounded-[2.5rem] card-shadow border border-gray-100"><div id="services-content"></div></div>
             <div id="activity-panel" class="hidden"><div id="activity-content"></div></div>
             <div id="reports-panel" class="hidden"><div id="reports-content"></div></div>
             <div id="user-management-panel" class="hidden"><div id="user-management-content"></div></div>
@@ -1551,7 +1861,7 @@
             
             <!-- Factory Reset Panel -->
             <div id="factory-reset-panel" class="hidden">
-                <div class="bg-white p-8 rounded-[2.5rem] card-shadow border space-y-6">
+                <div class="bg-white p-8 rounded-[2.5rem] card-shadow border border-red-200 space-y-6">
                     <h2 class="text-3xl font-bold text-red-600" data-i18n="factoryReset">Factory Reset</h2>
                     <p class="text-gray-600" data-i18n="resetSystem">Reset the system to its initial state</p>
                     <div class="bg-red-50 p-6 rounded-3xl border-2 border-red-200">
