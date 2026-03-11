@@ -3,24 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Barber Shop Analytics Pro</title>
+    <title>Barber Shop Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="config.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
         .font-ar { font-family: 'Cairo', sans-serif; }
         .card-shadow { box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1); }
-        .transaction-row:hover { background-color: #f3f4f6; }
+        .service-btn { transition: all 0.2s; }
+        .service-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
         .active-tab { background-color: #2563eb !important; color: white !important; }
-        .stat-card { transition: all 0.2s; }
-        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .transaction-row:hover { background-color: #f3f4f6; }
     </style>
     <script type="module">
         // ============== FIREBASE IMPORTS ==============
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp, doc, setDoc, getDoc, onSnapshot, writeBatch, deleteDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp, doc, setDoc, getDoc, onSnapshot, writeBatch, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // ============== FIREBASE INIT ==============
         const firebaseConfig = window.FIREBASE_CONFIG;
@@ -28,10 +27,10 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // ============== TRANSLATIONS ==============
+        // ============== TRANSLATIONS - COMPLETE ==============
         const i18n = {
             en: {
-                appName: "Barber Analytics Pro",
+                appName: "Barber Shop Pro",
                 login: "Login",
                 logout: "Logout",
                 email: "Email Address",
@@ -51,8 +50,6 @@
                 users: "Users",
                 services: "Services",
                 reset: "Reset",
-                
-                // Dashboard
                 todayRevenue: "Today's Revenue",
                 todayCustomers: "Today's Customers",
                 todayTransactions: "Today's Transactions",
@@ -64,20 +61,16 @@
                 manageServices: "Manage Services",
                 viewReports: "View Reports",
                 viewAnalytics: "View Analytics",
-                
-                // Service Log
                 selectBarber: "Select Barber",
                 selectService: "Select Service",
                 numberOfCustomers: "Number of Customers",
                 logServiceBtn: "Log Service",
                 customService: "Custom Service",
-                customServiceDesc: "Create a custom service with your own price and description",
+                customServiceDesc: "Create a custom service with your own price",
                 customPrice: "Price ($)",
-                serviceDescription: "Service Description (optional)",
+                serviceDescription: "Description (optional)",
                 logCustom: "Log Custom Service",
                 recentLogs: "Recent Transactions",
-                
-                // Transactions
                 allTransactions: "All Transactions",
                 dateTime: "Date & Time",
                 barber: "Barber",
@@ -93,8 +86,6 @@
                 allBarbers: "All Barbers",
                 allServices: "All Services",
                 exportCSV: "Export CSV",
-                
-                // Reports
                 revenueByBarber: "Revenue by Barber",
                 revenueByService: "Revenue by Service",
                 transactionList: "Transaction List",
@@ -102,22 +93,14 @@
                 serviceBreakdown: "Service Breakdown",
                 dailySummary: "Daily Summary",
                 detailedLogs: "Detailed Logs",
-                
-                // Analytics
                 peakHours: "Peak Hours",
                 busiestDays: "Busiest Days",
                 hourlyDistribution: "Hourly Distribution",
                 dailyDistribution: "Daily Distribution",
                 hour: "Hour",
-                customers: "Customers",
                 revenue: "Revenue",
-                transactions: "Transactions",
                 averageTicket: "Average Ticket",
-                
-                // Custom Service
                 customServiceName: "Service Name (optional)",
-                
-                // Common
                 addUser: "Add User",
                 addService: "Add Service",
                 fullName: "Full Name",
@@ -133,10 +116,18 @@
                 date: "Date",
                 time: "Time",
                 unauthorized: "You don't have permission",
-                loading: "Loading..."
+                loading: "Loading...",
+                serviceLogged: "Service logged successfully!",
+                userCreated: "User created successfully!",
+                serviceAdded: "Service added successfully!",
+                confirmDelete: "Delete this item?",
+                bulkDelete: "Bulk Delete",
+                deleteSuccess: "Deleted successfully",
+                error: "Error",
+                success: "Success"
             },
             ar: {
-                appName: "تحليلات الحلاقة",
+                appName: "محترف الحلاقة",
                 login: "تسجيل الدخول",
                 logout: "تسجيل الخروج",
                 email: "البريد الإلكتروني",
@@ -156,8 +147,6 @@
                 users: "المستخدمين",
                 services: "الخدمات",
                 reset: "إعادة ضبط",
-                
-                // Dashboard
                 todayRevenue: "إيرادات اليوم",
                 todayCustomers: "عملاء اليوم",
                 todayTransactions: "معاملات اليوم",
@@ -169,20 +158,16 @@
                 manageServices: "إدارة الخدمات",
                 viewReports: "عرض التقارير",
                 viewAnalytics: "عرض التحليلات",
-                
-                // Service Log
                 selectBarber: "اختر الحلاق",
                 selectService: "اختر الخدمة",
                 numberOfCustomers: "عدد العملاء",
                 logServiceBtn: "تسجيل",
                 customService: "خدمة مخصصة",
-                customServiceDesc: "إنشاء خدمة مخصصة بسعر ووصف خاص",
+                customServiceDesc: "إنشاء خدمة مخصصة بسعر خاص",
                 customPrice: "السعر ($)",
-                serviceDescription: "وصف الخدمة (اختياري)",
+                serviceDescription: "الوصف (اختياري)",
                 logCustom: "تسجيل خدمة مخصصة",
                 recentLogs: "آخر المعاملات",
-                
-                // Transactions
                 allTransactions: "كل المعاملات",
                 dateTime: "التاريخ والوقت",
                 barber: "الحلاق",
@@ -198,8 +183,6 @@
                 allBarbers: "كل الحلاقين",
                 allServices: "كل الخدمات",
                 exportCSV: "تصدير CSV",
-                
-                // Reports
                 revenueByBarber: "الإيرادات حسب الحلاق",
                 revenueByService: "الإيرادات حسب الخدمة",
                 transactionList: "قائمة المعاملات",
@@ -207,22 +190,14 @@
                 serviceBreakdown: "تفصيل الخدمات",
                 dailySummary: "ملخص يومي",
                 detailedLogs: "سجل تفصيلي",
-                
-                // Analytics
                 peakHours: "ساعات الذروة",
                 busiestDays: "أكثر الأيام ازدحاماً",
                 hourlyDistribution: "توزيع الساعات",
                 dailyDistribution: "التوزيع اليومي",
                 hour: "الساعة",
-                customers: "عملاء",
                 revenue: "إيرادات",
-                transactions: "معاملات",
                 averageTicket: "متوسط التذكرة",
-                
-                // Custom Service
                 customServiceName: "اسم الخدمة (اختياري)",
-                
-                // Common
                 addUser: "إضافة مستخدم",
                 addService: "إضافة خدمة",
                 fullName: "الاسم الكامل",
@@ -238,7 +213,15 @@
                 date: "التاريخ",
                 time: "الوقت",
                 unauthorized: "ليس لديك صلاحية",
-                loading: "جاري التحميل..."
+                loading: "جاري التحميل...",
+                serviceLogged: "تم تسجيل الخدمة بنجاح!",
+                userCreated: "تم إنشاء المستخدم!",
+                serviceAdded: "تمت إضافة الخدمة!",
+                confirmDelete: "حذف هذا العنصر؟",
+                bulkDelete: "حذف مجموعة",
+                deleteSuccess: "تم الحذف بنجاح",
+                error: "خطأ",
+                success: "نجاح"
             }
         };
 
@@ -267,7 +250,6 @@
         let reportStartDate = weekAgo;
         let reportEndDate = today;
         let reportBarberFilter = 'all';
-        let reportServiceFilter = 'all';
         
         let analyticsStartDate = weekAgo;
         let analyticsEndDate = today;
@@ -288,13 +270,17 @@
 
         // ============== CHECK FIRST SETUP ==============
         async function checkFirstSetup() {
-            const snap = await getDocs(collection(db, "users"));
-            if (snap.empty) {
-                document.getElementById('setup-card').classList.remove('hidden');
-                document.getElementById('login-card').classList.add('hidden');
-            } else {
-                document.getElementById('setup-card').classList.add('hidden');
-                document.getElementById('login-card').classList.remove('hidden');
+            try {
+                const snap = await getDocs(collection(db, "users"));
+                if (snap.empty) {
+                    document.getElementById('setup-card').classList.remove('hidden');
+                    document.getElementById('login-card').classList.add('hidden');
+                } else {
+                    document.getElementById('setup-card').classList.add('hidden');
+                    document.getElementById('login-card').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error("Setup check error:", error);
             }
         }
 
@@ -334,6 +320,7 @@
             onSnapshot(collection(db, "services"), (snap) => {
                 services = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 if (currentPanel === 'services' || currentPanel === 'services-mgmt') refreshCurrentPanel();
+                if (currentPanel === 'log') renderServiceLog();
             });
 
             // Users
@@ -349,17 +336,17 @@
                 });
             }
 
-            // Transactions - ALL transactions stored individually
+            // Transactions
             let q;
             if (userRole === 'admin' || userRole === 'cashier') {
                 q = query(collection(db, "transactions"), orderBy("timestamp", "desc"));
             } else {
-                q = query(collection(db, "transactions"), where("barberId", "==", currentUser.uid), orderBy("timestamp", "desc"));
+                q = query(collection(db, "transactions"), where("barberId", "==", currentUser?.uid), orderBy("timestamp", "desc"));
             }
             
             onSnapshot(q, (snap) => {
                 transactions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                if (currentPanel === 'dashboard' || currentPanel === 'transactions' || currentPanel === 'reports' || currentPanel === 'analytics') {
+                if (currentPanel === 'dashboard' || currentPanel === 'transactions' || currentPanel === 'reports' || currentPanel === 'analytics' || currentPanel === 'log') {
                     refreshCurrentPanel();
                 }
             });
@@ -388,16 +375,16 @@
             // Show selected panel
             if (panel === 'dashboard') {
                 document.getElementById('dashboard-panel').classList.remove('hidden');
-                document.getElementById('tab-dashboard').classList.add('bg-blue-600', 'text-white');
+                document.getElementById('tab-dashboard')?.classList.add('bg-blue-600', 'text-white');
                 renderDashboard();
             } else if (panel === 'log') {
                 document.getElementById('service-log-panel').classList.remove('hidden');
-                document.getElementById('tab-log').classList.add('bg-blue-600', 'text-white');
+                document.getElementById('tab-log')?.classList.add('bg-blue-600', 'text-white');
                 renderServiceLog();
             } else if (panel === 'transactions') {
-                if (userRole === 'admin' || userRole === 'cashier') {
+                if (userRole === 'admin' || userRole === 'cashier' || userRole === 'barber') {
                     document.getElementById('transactions-panel').classList.remove('hidden');
-                    document.getElementById('tab-transactions').classList.add('bg-blue-600', 'text-white');
+                    document.getElementById('tab-transactions')?.classList.add('bg-blue-600', 'text-white');
                     renderTransactions();
                 } else {
                     alert(i18n[lang].unauthorized);
@@ -406,7 +393,7 @@
             } else if (panel === 'reports') {
                 if (userRole === 'admin' || userRole === 'cashier') {
                     document.getElementById('reports-panel').classList.remove('hidden');
-                    document.getElementById('tab-reports').classList.add('bg-blue-600', 'text-white');
+                    document.getElementById('tab-reports')?.classList.add('bg-blue-600', 'text-white');
                     renderReports();
                 } else {
                     alert(i18n[lang].unauthorized);
@@ -415,7 +402,7 @@
             } else if (panel === 'analytics') {
                 if (userRole === 'admin' || userRole === 'cashier') {
                     document.getElementById('analytics-panel').classList.remove('hidden');
-                    document.getElementById('tab-analytics').classList.add('bg-blue-600', 'text-white');
+                    document.getElementById('tab-analytics')?.classList.add('bg-blue-600', 'text-white');
                     renderAnalytics();
                 } else {
                     alert(i18n[lang].unauthorized);
@@ -424,7 +411,7 @@
             } else if (panel === 'users') {
                 if (userRole === 'admin') {
                     document.getElementById('users-panel').classList.remove('hidden');
-                    document.getElementById('tab-users').classList.add('bg-blue-600', 'text-white');
+                    document.getElementById('tab-users')?.classList.add('bg-blue-600', 'text-white');
                     renderUsers();
                 } else {
                     alert(i18n[lang].unauthorized);
@@ -433,7 +420,7 @@
             } else if (panel === 'services') {
                 if (userRole === 'admin') {
                     document.getElementById('services-panel').classList.remove('hidden');
-                    document.getElementById('tab-services').classList.add('bg-blue-600', 'text-white');
+                    document.getElementById('tab-services')?.classList.add('bg-blue-600', 'text-white');
                     renderServicesMgmt();
                 } else {
                     alert(i18n[lang].unauthorized);
@@ -442,7 +429,7 @@
             } else if (panel === 'reset') {
                 if (userRole === 'admin') {
                     document.getElementById('reset-panel').classList.remove('hidden');
-                    document.getElementById('tab-reset').classList.add('bg-blue-600', 'text-white');
+                    document.getElementById('tab-reset')?.classList.add('bg-blue-600', 'text-white');
                 } else {
                     alert(i18n[lang].unauthorized);
                     showPanel('dashboard');
@@ -479,12 +466,12 @@
                 });
 
                 const defaultServices = [
-                    { nameEn: "Haircut", nameAr: "حلاقة شعر", price: 120 },
-                    { nameEn: "Beard Trim", nameAr: "حلاقة دقن", price: 50 },
-                    { nameEn: "Kids Cut", nameAr: "حلاقة أطفال", price: 100 },
-                    { nameEn: "Hair Coloring", nameAr: "صبغ شعر", price: 200 },
-                    { nameEn: "Shave", nameAr: "حلاقة", price: 40 },
-                    { nameEn: "Face Mask", nameAr: "قناع للوجه", price: 80 }
+                    { nameEn: "Haircut", nameAr: "حلاقة شعر", price: 120, icon: "✂️" },
+                    { nameEn: "Beard Trim", nameAr: "حلاقة دقن", price: 50, icon: "🧔" },
+                    { nameEn: "Kids Cut", nameAr: "حلاقة أطفال", price: 100, icon: "👶" },
+                    { nameEn: "Hair Coloring", nameAr: "صبغ شعر", price: 200, icon: "🎨" },
+                    { nameEn: "Shave", nameAr: "حلاقة", price: 40, icon: "🪒" },
+                    { nameEn: "Face Mask", nameAr: "قناع للوجه", price: 80, icon: "🧴" }
                 ];
 
                 const batch = writeBatch(db);
@@ -524,7 +511,7 @@
             let todayTx = [];
             
             if (userRole === 'barber') {
-                todayTx = transactions.filter(t => t.date === todayStr && t.barberId === currentUser.uid);
+                todayTx = transactions.filter(t => t.date === todayStr && t.barberId === currentUser?.uid);
             } else {
                 todayTx = transactions.filter(t => t.date === todayStr);
             }
@@ -536,7 +523,6 @@
 
             const weekTx = transactions.filter(t => t.date >= weekAgo);
             const weekRevenue = weekTx.reduce((s, t) => s + (t.price || 0), 0);
-            const weekCustomers = weekTx.reduce((s, t) => s + (t.customers || 1), 0);
             
             const monthTx = transactions.filter(t => t.date >= monthAgo);
             const monthRevenue = monthTx.reduce((s, t) => s + (t.price || 0), 0);
@@ -549,19 +535,19 @@
                         <h2 class="text-2xl font-bold text-gray-800">Admin Dashboard</h2>
                         
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div class="stat-card bg-white p-6 rounded-2xl shadow">
+                            <div class="bg-white p-6 rounded-2xl shadow">
                                 <div class="text-3xl font-bold text-blue-600">$${revenue}</div>
                                 <div class="text-sm text-gray-600">${i18n[lang].todayRevenue}</div>
                             </div>
-                            <div class="stat-card bg-white p-6 rounded-2xl shadow">
+                            <div class="bg-white p-6 rounded-2xl shadow">
                                 <div class="text-3xl font-bold text-green-600">${customers}</div>
                                 <div class="text-sm text-gray-600">${i18n[lang].todayCustomers}</div>
                             </div>
-                            <div class="stat-card bg-white p-6 rounded-2xl shadow">
+                            <div class="bg-white p-6 rounded-2xl shadow">
                                 <div class="text-3xl font-bold text-purple-600">${txCount}</div>
                                 <div class="text-sm text-gray-600">${i18n[lang].todayTransactions}</div>
                             </div>
-                            <div class="stat-card bg-white p-6 rounded-2xl shadow">
+                            <div class="bg-white p-6 rounded-2xl shadow">
                                 <div class="text-3xl font-bold text-orange-600">${activeBarbers}</div>
                                 <div class="text-sm text-gray-600">${i18n[lang].activeBarbers}</div>
                             </div>
@@ -570,7 +556,7 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div class="bg-blue-50 p-4 rounded-2xl">
                                 <div class="text-xl font-bold text-blue-700">$${weekRevenue}</div>
-                                <div class="text-sm text-blue-600">${i18n[lang].thisWeek} (${weekCustomers} ${i18n[lang].customers})</div>
+                                <div class="text-sm text-blue-600">${i18n[lang].thisWeek}</div>
                             </div>
                             <div class="bg-green-50 p-4 rounded-2xl">
                                 <div class="text-xl font-bold text-green-700">$${monthRevenue}</div>
@@ -600,44 +586,32 @@
                                 <div class="text-sm font-bold">${i18n[lang].analytics}</div>
                             </button>
                         </div>
-
-                        <!-- Recent Transactions Preview -->
-                        <div class="bg-white p-6 rounded-2xl shadow">
-                            <h3 class="font-bold text-lg mb-4">${i18n[lang].recentLogs}</h3>
-                            <div class="space-y-2 max-h-60 overflow-y-auto">
-                                ${transactions.slice(0, 10).map(t => {
-                                    const date = t.timestamp?.toDate ? t.timestamp.toDate().toLocaleString() : t.date;
-                                    const name = t.isCustom ? (t.customName || 'Custom') : (lang === 'en' ? t.serviceNameEn : t.serviceNameAr);
-                                    return `
-                                        <div class="flex justify-between items-center border-b pb-2 text-sm">
-                                            <div><span class="font-medium">${t.barberName}</span> - ${name}</div>
-                                            <div><span class="text-blue-600 font-bold">$${t.price}</span> <span class="text-gray-400 text-xs">${date}</span></div>
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                        </div>
                     </div>
                 `;
             } else if (userRole === 'barber') {
+                const myTodayTx = todayTx.filter(t => t.barberId === currentUser?.uid);
+                const myRevenue = myTodayTx.reduce((s, t) => s + (t.price || 0), 0);
+                const myCustomers = myTodayTx.reduce((s, t) => s + (t.customers || 1), 0);
+                const myCount = myTodayTx.length;
+                
                 html = `
                     <div class="space-y-6">
                         <h2 class="text-2xl font-bold text-gray-800">${i18n[lang].dashboard}</h2>
                         
                         <div class="grid grid-cols-2 gap-4">
-                            <div class="stat-card bg-white p-6 rounded-2xl shadow">
-                                <div class="text-3xl font-bold text-blue-600">$${revenue}</div>
+                            <div class="bg-white p-6 rounded-2xl shadow">
+                                <div class="text-3xl font-bold text-blue-600">$${myRevenue}</div>
                                 <div class="text-sm text-gray-600">${i18n[lang].todayRevenue}</div>
                             </div>
-                            <div class="stat-card bg-white p-6 rounded-2xl shadow">
-                                <div class="text-3xl font-bold text-green-600">${customers}</div>
+                            <div class="bg-white p-6 rounded-2xl shadow">
+                                <div class="text-3xl font-bold text-green-600">${myCustomers}</div>
                                 <div class="text-sm text-gray-600">${i18n[lang].todayCustomers}</div>
                             </div>
-                            <div class="stat-card bg-white p-6 rounded-2xl shadow">
-                                <div class="text-3xl font-bold text-purple-600">${txCount}</div>
+                            <div class="bg-white p-6 rounded-2xl shadow">
+                                <div class="text-3xl font-bold text-purple-600">${myCount}</div>
                                 <div class="text-sm text-gray-600">${i18n[lang].todayTransactions}</div>
                             </div>
-                            <div class="stat-card bg-white p-6 rounded-2xl shadow">
+                            <div class="bg-white p-6 rounded-2xl shadow">
                                 <div class="text-3xl font-bold text-orange-600">$${weekRevenue}</div>
                                 <div class="text-sm text-gray-600">${i18n[lang].thisWeek}</div>
                             </div>
@@ -653,23 +627,6 @@
                                 <div class="font-bold">${i18n[lang].transactions}</div>
                             </button>
                         </div>
-
-                        <!-- My Recent Transactions -->
-                        <div class="bg-white p-6 rounded-2xl shadow">
-                            <h3 class="font-bold text-lg mb-4">${i18n[lang].recentLogs}</h3>
-                            <div class="space-y-2 max-h-60 overflow-y-auto">
-                                ${transactions.filter(t => t.barberId === currentUser.uid).slice(0, 10).map(t => {
-                                    const date = t.timestamp?.toDate ? t.timestamp.toDate().toLocaleString() : t.date;
-                                    const name = t.isCustom ? (t.customName || 'Custom') : (lang === 'en' ? t.serviceNameEn : t.serviceNameAr);
-                                    return `
-                                        <div class="flex justify-between items-center border-b pb-2 text-sm">
-                                            <div><span class="font-medium">${name}</span></div>
-                                            <div><span class="text-blue-600 font-bold">$${t.price}</span> <span class="text-gray-400 text-xs">${date}</span></div>
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                        </div>
                     </div>
                 `;
             } else if (userRole === 'cashier') {
@@ -678,19 +635,19 @@
                         <h2 class="text-2xl font-bold text-gray-800">Cashier Dashboard</h2>
                         
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div class="stat-card bg-white p-6 rounded-2xl shadow">
+                            <div class="bg-white p-6 rounded-2xl shadow">
                                 <div class="text-3xl font-bold text-blue-600">$${revenue}</div>
                                 <div class="text-sm text-gray-600">${i18n[lang].todayRevenue}</div>
                             </div>
-                            <div class="stat-card bg-white p-6 rounded-2xl shadow">
+                            <div class="bg-white p-6 rounded-2xl shadow">
                                 <div class="text-3xl font-bold text-green-600">${customers}</div>
                                 <div class="text-sm text-gray-600">${i18n[lang].todayCustomers}</div>
                             </div>
-                            <div class="stat-card bg-white p-6 rounded-2xl shadow">
+                            <div class="bg-white p-6 rounded-2xl shadow">
                                 <div class="text-3xl font-bold text-purple-600">${txCount}</div>
                                 <div class="text-sm text-gray-600">${i18n[lang].todayTransactions}</div>
                             </div>
-                            <div class="stat-card bg-white p-6 rounded-2xl shadow">
+                            <div class="bg-white p-6 rounded-2xl shadow">
                                 <div class="text-3xl font-bold text-orange-600">$${weekRevenue}</div>
                                 <div class="text-sm text-gray-600">${i18n[lang].thisWeek}</div>
                             </div>
@@ -709,23 +666,6 @@
                                 <div class="text-2xl">📊</div>
                                 <div class="text-sm font-bold">${i18n[lang].reports}</div>
                             </button>
-                        </div>
-
-                        <!-- Recent Transactions -->
-                        <div class="bg-white p-6 rounded-2xl shadow">
-                            <h3 class="font-bold text-lg mb-4">${i18n[lang].recentLogs}</h3>
-                            <div class="space-y-2 max-h-60 overflow-y-auto">
-                                ${transactions.slice(0, 10).map(t => {
-                                    const date = t.timestamp?.toDate ? t.timestamp.toDate().toLocaleString() : t.date;
-                                    const name = t.isCustom ? (t.customName || 'Custom') : (lang === 'en' ? t.serviceNameEn : t.serviceNameAr);
-                                    return `
-                                        <div class="flex justify-between items-center border-b pb-2 text-sm">
-                                            <div><span class="font-medium">${t.barberName}</span> - ${name}</div>
-                                            <div><span class="text-blue-600 font-bold">$${t.price}</span> <span class="text-gray-400 text-xs">${date}</span></div>
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
                         </div>
                     </div>
                 `;
@@ -758,7 +698,7 @@
                 </div>
             `;
 
-            // Custom service card - IMPROVED: Each custom service is logged individually
+            // Custom service card
             html += `
                 <div class="mb-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border-2 border-dashed border-blue-300">
                     <div class="text-center mb-4">
@@ -793,24 +733,24 @@
 
             html += `</div>`;
 
-            // Recent logs - INDIVIDUAL transactions
+            // Recent logs
             html += `<div class="mt-8"><h3 class="font-bold text-xl mb-4">${i18n[lang].recentLogs}</h3><div class="space-y-2 max-h-80 overflow-y-auto">`;
 
             let recent = userRole === 'barber' 
-                ? transactions.filter(t => t.barberId === currentUser.uid).slice(0, 20)
+                ? transactions.filter(t => t.barberId === currentUser?.uid).slice(0, 20)
                 : transactions.slice(0, 20);
 
             recent.forEach(t => {
-                const name = t.isCustom ? (t.customName || 'Custom Service') : (lang === 'en' ? t.serviceNameEn : t.serviceNameAr);
+                const name = t.isCustom ? (t.customName || 'Custom') : (lang === 'en' ? t.serviceNameEn : t.serviceNameAr);
                 const date = t.timestamp?.toDate ? t.timestamp.toDate().toLocaleString() : t.date;
                 html += `
-                    <div class="transaction-row bg-white p-3 rounded-xl shadow-sm flex justify-between items-center">
+                    <div class="bg-white p-3 rounded-xl shadow-sm flex justify-between items-center border">
                         <div>
                             <div class="font-bold">${t.barberName} - ${name} ${t.isCustom ? '✨' : ''}</div>
                             <div class="text-xs text-gray-500">${date}</div>
                         </div>
                         <div class="text-right">
-                            <div class="text-blue-600 font-bold text-lg">$${t.price}</div>
+                            <div class="text-blue-600 font-bold">$${t.price}</div>
                             <div class="text-xs text-gray-400">${t.customers || 1} cust</div>
                         </div>
                     </div>
@@ -825,411 +765,406 @@
             document.getElementById('log-content').innerHTML = html;
         }
 
-        // Regular service log - INDIVIDUAL transaction
+        // Regular service log
         window.logService = async (serviceId) => {
             const service = services.find(s => s.id === serviceId);
             if (!service) return;
 
             let barberId;
             if (userRole === 'barber') {
-                barberId = currentUser.uid;
+                barberId = currentUser?.uid;
             } else {
                 const sel = document.getElementById('log-barber');
-                if (!sel || !sel.value) return alert(i18n[lang].selectBarber);
+                if (!sel || !sel.value) {
+                    alert(i18n[lang].selectBarber);
+                    return;
+                }
                 barberId = sel.value;
             }
 
-            const customers = parseInt(document.getElementById('log-customers').value) || 1;
+            const customers = parseInt(document.getElementById('log-customers')?.value) || 1;
             const barber = barbers.find(b => b.uid === barberId);
             const now = new Date();
             const dateStr = now.toISOString().split('T')[0];
             const timeStr = now.toLocaleTimeString();
 
-            // Add INDIVIDUAL transaction
-            await addDoc(collection(db, "transactions"), {
-                barberId, 
-                barberName: barber?.name || barber?.email || 'Unknown',
-                serviceId: service.id,
-                serviceNameEn: service.nameEn,
-                serviceNameAr: service.nameAr,
-                price: service.price,
-                customers,
-                timestamp: serverTimestamp(),
-                date: dateStr,
-                time: timeStr,
-                loggedBy: currentUser.uid,
-                loggedByEmail: currentUser.email,
-                isCustom: false
-            });
+            try {
+                await addDoc(collection(db, "transactions"), {
+                    barberId, 
+                    barberName: barber?.name || barber?.email?.split('@')[0] || 'Unknown',
+                    serviceId: service.id,
+                    serviceNameEn: service.nameEn,
+                    serviceNameAr: service.nameAr,
+                    price: service.price,
+                    customers,
+                    timestamp: serverTimestamp(),
+                    date: dateStr,
+                    time: timeStr,
+                    loggedBy: currentUser?.uid,
+                    loggedByEmail: currentUser?.email,
+                    isCustom: false
+                });
 
-            alert(i18n[lang].serviceLogged);
+                alert(i18n[lang].serviceLogged);
+            } catch (error) {
+                console.error(error);
+                alert(i18n[lang].error + ': ' + error.message);
+            }
         };
 
-       // ============== CUSTOM SERVICE LOG - FIXED ==============
-window.logCustomService = async () => {
-    let barberId;
-    
-    // Determine barber
-    if (userRole === 'barber') {
-        barberId = currentUser.uid;
-    } else {
-        const sel = document.getElementById('log-barber');
-        if (!sel || !sel.value) {
-            alert('Please select a barber');
-            return;
-        }
-        barberId = sel.value;
-    }
-
-    // Get form values
-    const customName = document.getElementById('custom-name')?.value || '';
-    const priceInput = document.getElementById('custom-price');
-    const customersInput = document.getElementById('log-customers');
-    
-    const price = parseFloat(priceInput?.value);
-    const customers = parseInt(customersInput?.value) || 1;
-
-    // Validate
-    if (!price || price <= 0) {
-        alert('Please enter a valid price');
-        return;
-    }
-
-    const barber = barbers.find(b => b.uid === barberId);
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
-    const timeStr = now.toLocaleTimeString();
-
-    try {
-        // Add INDIVIDUAL custom transaction
-        await addDoc(collection(db, "transactions"), {
-            barberId,
-            barberName: barber?.name || barber?.email?.split('@')[0] || 'Unknown',
-            serviceId: 'custom',
-            serviceNameEn: 'Custom Service',
-            serviceNameAr: 'خدمة مخصصة',
-            customName: customName || (lang === 'en' ? 'Custom' : 'مخصص'),
-            price,
-            customers,
-            timestamp: serverTimestamp(),
-            date: dateStr,
-            time: timeStr,
-            loggedBy: currentUser.uid,
-            loggedByEmail: currentUser.email,
-            isCustom: true
-        });
-
-        // Clear form fields
-        if (document.getElementById('custom-name')) document.getElementById('custom-name').value = '';
-        if (document.getElementById('custom-price')) document.getElementById('custom-price').value = '';
-        
-        // SUCCESS MESSAGE - FIXED: Using direct string instead of undefined variable
-        alert('✅ Service logged successfully!');
-        
-    } catch (error) {
-        console.error('Error logging custom service:', error);
-        alert('Error: ' + error.message);
-    }
-};
-
-        // ============== TRANSACTIONS - DETAILED LIST ==============
-        // ============== TRANSACTIONS - WITH ADMIN DELETE ==============
-function renderTransactions() {
-    // Apply filters
-    let filtered = [...transactions];
-    
-    if (userRole === 'barber') {
-        filtered = filtered.filter(t => t.barberId === currentUser.uid);
-    } else {
-        if (txBarberFilter !== 'all') {
-            filtered = filtered.filter(t => t.barberId === txBarberFilter);
-        }
-        if (txServiceFilter !== 'all') {
-            if (txServiceFilter === 'custom') {
-                filtered = filtered.filter(t => t.isCustom === true);
+        // Custom service log - FIXED
+        window.logCustomService = async () => {
+            let barberId;
+            
+            if (userRole === 'barber') {
+                barberId = currentUser?.uid;
             } else {
-                filtered = filtered.filter(t => t.serviceId === txServiceFilter);
+                const sel = document.getElementById('log-barber');
+                if (!sel || !sel.value) {
+                    alert(i18n[lang].selectBarber);
+                    return;
+                }
+                barberId = sel.value;
             }
-        }
-    }
-    
-    filtered = filtered.filter(t => t.date >= txStartDate && t.date <= txEndDate);
 
-    const totalRevenue = filtered.reduce((s, t) => s + (t.price || 0), 0);
-    const totalCustomers = filtered.reduce((s, t) => s + (t.customers || 1), 0);
-
-    let html = `
-        <div class="space-y-6">
-            <h2 class="text-2xl font-bold text-gray-800">${i18n[lang].transactions}</h2>
+            const customName = document.getElementById('custom-name')?.value || '';
+            const priceInput = document.getElementById('custom-price');
+            const customersInput = document.getElementById('log-customers');
             
-            <!-- Filters -->
-            <div class="bg-white p-4 rounded-2xl shadow">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-    `;
+            const price = parseFloat(priceInput?.value);
+            const customers = parseInt(customersInput?.value) || 1;
 
-    if (userRole !== 'barber') {
-        html += `
-            <div>
-                <select id="tx-barber" class="w-full p-3 border rounded-xl">
-                    <option value="all">${i18n[lang].allBarbers}</option>
-                    ${barbers.map(b => `<option value="${b.uid}" ${txBarberFilter === b.uid ? 'selected' : ''}>${b.name || b.email}</option>`).join('')}
-                </select>
-            </div>
-            <div>
-                <select id="tx-service" class="w-full p-3 border rounded-xl">
-                    <option value="all">${i18n[lang].allServices}</option>
-                    <option value="custom" ${txServiceFilter === 'custom' ? 'selected' : ''}>✨ Custom Services</option>
-                    ${services.map(s => `<option value="${s.id}" ${txServiceFilter === s.id ? 'selected' : ''}>${lang === 'en' ? s.nameEn : s.nameAr}</option>`).join('')}
-                </select>
-            </div>
-        `;
-    }
+            if (!price || price <= 0) {
+                alert(i18n[lang].fillAllFields);
+                return;
+            }
 
-    html += `
-                <div>
-                    <input type="date" id="tx-start" value="${txStartDate}" class="w-full p-3 border rounded-xl">
-                </div>
-                <div>
-                    <input type="date" id="tx-end" value="${txEndDate}" class="w-full p-3 border rounded-xl">
-                </div>
-            </div>
-            <div class="flex gap-3">
-                <button onclick="applyTxFilter()" class="flex-1 bg-blue-600 text-white p-3 rounded-xl font-bold">${i18n[lang].filter}</button>
-                <button onclick="resetTxFilter()" class="flex-1 bg-gray-200 p-3 rounded-xl font-bold">${i18n[lang].resetFilter}</button>
-                ${userRole === 'admin' ? `
-                    <button onclick="showBulkDelete()" class="bg-red-600 text-white px-4 py-3 rounded-xl font-bold">🗑️ Bulk</button>
-                ` : ''}
-            </div>
-        </div>
+            const barber = barbers.find(b => b.uid === barberId);
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toLocaleTimeString();
 
-        <!-- Summary -->
-        <div class="grid grid-cols-3 gap-4">
-            <div class="bg-white p-4 rounded-2xl shadow text-center">
-                <div class="text-2xl font-bold text-blue-600">$${totalRevenue}</div>
-                <div class="text-sm">${i18n[lang].total}</div>
-            </div>
-            <div class="bg-white p-4 rounded-2xl shadow text-center">
-                <div class="text-2xl font-bold text-green-600">${filtered.length}</div>
-                <div class="text-sm">${i18n[lang].transactions}</div>
-            </div>
-            <div class="bg-white p-4 rounded-2xl shadow text-center">
-                <div class="text-2xl font-bold text-purple-600">${totalCustomers}</div>
-                <div class="text-sm">${i18n[lang].customers}</div>
-            </div>
-        </div>
+            try {
+                await addDoc(collection(db, "transactions"), {
+                    barberId,
+                    barberName: barber?.name || barber?.email?.split('@')[0] || 'Unknown',
+                    serviceId: 'custom',
+                    serviceNameEn: 'Custom Service',
+                    serviceNameAr: 'خدمة مخصصة',
+                    customName: customName || (lang === 'en' ? 'Custom' : 'مخصص'),
+                    price,
+                    customers,
+                    timestamp: serverTimestamp(),
+                    date: dateStr,
+                    time: timeStr,
+                    loggedBy: currentUser?.uid,
+                    loggedByEmail: currentUser?.email,
+                    isCustom: true
+                });
 
-        <!-- Transaction List - WITH DELETE BUTTONS FOR ADMIN -->
-        <div class="bg-white p-6 rounded-2xl shadow">
-            <div class="flex justify-between mb-4">
-                <h3 class="font-bold text-lg">${i18n[lang].detailedLogs}</h3>
-                <button onclick="exportTransactions()" class="bg-green-600 text-white px-4 py-2 rounded-xl text-sm">${i18n[lang].exportCSV}</button>
-            </div>
+                // Clear form
+                if (document.getElementById('custom-name')) document.getElementById('custom-name').value = '';
+                if (document.getElementById('custom-price')) document.getElementById('custom-price').value = '';
+                
+                alert(i18n[lang].serviceLogged);
+                
+            } catch (error) {
+                console.error(error);
+                alert(i18n[lang].error + ': ' + error.message);
+            }
+        };
+
+        // ============== TRANSACTIONS - WITH ADMIN DELETE ==============
+        function renderTransactions() {
+            // Apply filters
+            let filtered = [...transactions];
             
-            <div class="space-y-2 max-h-96 overflow-y-auto">
-    `;
+            if (userRole === 'barber') {
+                filtered = filtered.filter(t => t.barberId === currentUser?.uid);
+            } else {
+                if (txBarberFilter !== 'all') {
+                    filtered = filtered.filter(t => t.barberId === txBarberFilter);
+                }
+                if (txServiceFilter !== 'all') {
+                    if (txServiceFilter === 'custom') {
+                        filtered = filtered.filter(t => t.isCustom === true);
+                    } else {
+                        filtered = filtered.filter(t => t.serviceId === txServiceFilter);
+                    }
+                }
+            }
+            
+            filtered = filtered.filter(t => t.date >= txStartDate && t.date <= txEndDate);
 
-    if (filtered.length === 0) {
-        html += `<div class="text-center text-gray-500 py-8">${i18n[lang].noData}</div>`;
-    } else {
-        filtered.forEach(t => {
-            const date = t.timestamp?.toDate ? t.timestamp.toDate().toLocaleString() : `${t.date} ${t.time || ''}`;
-            const name = t.isCustom ? (t.customName || 'Custom Service') : (lang === 'en' ? t.serviceNameEn : t.serviceNameAr);
+            const totalRevenue = filtered.reduce((s, t) => s + (t.price || 0), 0);
+            const totalCustomers = filtered.reduce((s, t) => s + (t.customers || 1), 0);
+
+            let html = `
+                <div class="space-y-6">
+                    <h2 class="text-2xl font-bold text-gray-800">${i18n[lang].transactions}</h2>
+                    
+                    <!-- Filters -->
+                    <div class="bg-white p-4 rounded-2xl shadow">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            `;
+
+            if (userRole !== 'barber') {
+                html += `
+                    <div>
+                        <select id="tx-barber" class="w-full p-3 border rounded-xl">
+                            <option value="all">${i18n[lang].allBarbers}</option>
+                            ${barbers.map(b => `<option value="${b.uid}" ${txBarberFilter === b.uid ? 'selected' : ''}>${b.name || b.email}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <select id="tx-service" class="w-full p-3 border rounded-xl">
+                            <option value="all">${i18n[lang].allServices}</option>
+                            <option value="custom" ${txServiceFilter === 'custom' ? 'selected' : ''}>✨ Custom Services</option>
+                            ${services.map(s => `<option value="${s.id}" ${txServiceFilter === s.id ? 'selected' : ''}>${lang === 'en' ? s.nameEn : s.nameAr}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+            }
+
             html += `
-                <div class="transaction-row border rounded-xl p-3 hover:bg-gray-50">
-                    <div class="flex justify-between items-center">
-                        <div class="flex-1">
-                            <div class="font-bold">${t.barberName} - ${name} ${t.isCustom ? '✨' : ''}</div>
-                            <div class="text-xs text-gray-500">${date}</div>
+                        <div>
+                            <input type="date" id="tx-start" value="${txStartDate}" class="w-full p-3 border rounded-xl">
                         </div>
-                        <div class="text-right flex items-center gap-4">
-                            <div>
-                                <div class="text-blue-600 font-bold text-lg">$${t.price}</div>
-                                <div class="text-xs text-gray-400">${t.customers || 1} cust</div>
+                        <div>
+                            <input type="date" id="tx-end" value="${txEndDate}" class="w-full p-3 border rounded-xl">
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="applyTxFilter()" class="flex-1 bg-blue-600 text-white p-3 rounded-xl font-bold">${i18n[lang].filter}</button>
+                        <button onclick="resetTxFilter()" class="flex-1 bg-gray-200 p-3 rounded-xl font-bold">${i18n[lang].resetFilter}</button>
+                        ${userRole === 'admin' ? `
+                            <button onclick="showBulkDelete()" class="bg-red-600 text-white px-4 py-3 rounded-xl font-bold">🗑️ ${i18n[lang].bulkDelete}</button>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-white p-4 rounded-2xl shadow text-center">
+                        <div class="text-2xl font-bold text-blue-600">$${totalRevenue}</div>
+                        <div class="text-sm">${i18n[lang].total}</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl shadow text-center">
+                        <div class="text-2xl font-bold text-green-600">${filtered.length}</div>
+                        <div class="text-sm">${i18n[lang].transactions}</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl shadow text-center">
+                        <div class="text-2xl font-bold text-purple-600">${totalCustomers}</div>
+                        <div class="text-sm">${i18n[lang].customers}</div>
+                    </div>
+                </div>
+
+                <!-- Transaction List -->
+                <div class="bg-white p-6 rounded-2xl shadow">
+                    <div class="flex justify-between mb-4">
+                        <h3 class="font-bold text-lg">${i18n[lang].detailedLogs}</h3>
+                        <button onclick="exportTransactions()" class="bg-green-600 text-white px-4 py-2 rounded-xl text-sm">${i18n[lang].exportCSV}</button>
+                    </div>
+                    
+                    <div class="space-y-2 max-h-96 overflow-y-auto">
+            `;
+
+            if (filtered.length === 0) {
+                html += `<div class="text-center text-gray-500 py-8">${i18n[lang].noData}</div>`;
+            } else {
+                filtered.forEach(t => {
+                    const date = t.timestamp?.toDate ? t.timestamp.toDate().toLocaleString() : `${t.date} ${t.time || ''}`;
+                    const name = t.isCustom ? (t.customName || 'Custom') : (lang === 'en' ? t.serviceNameEn : t.serviceNameAr);
+                    html += `
+                        <div class="transaction-row border rounded-xl p-3 hover:bg-gray-50">
+                            <div class="flex justify-between items-center">
+                                <div class="flex-1">
+                                    <div class="font-bold">${t.barberName} - ${name} ${t.isCustom ? '✨' : ''}</div>
+                                    <div class="text-xs text-gray-500">${date}</div>
+                                </div>
+                                <div class="text-right flex items-center gap-4">
+                                    <div>
+                                        <div class="text-blue-600 font-bold text-lg">$${t.price}</div>
+                                        <div class="text-xs text-gray-400">${t.customers || 1} cust</div>
+                                    </div>
+                                    ${userRole === 'admin' ? `
+                                        <button onclick="deleteTransaction('${t.id}')" class="text-red-500 hover:text-red-700 text-xl" title="${i18n[lang].delete}">
+                                            🗑️
+                                        </button>
+                                    ` : ''}
+                                </div>
                             </div>
-                            ${userRole === 'admin' ? `
-                                <button onclick="deleteTransaction('${t.id}')" class="text-red-500 hover:text-red-700 text-xl" title="Delete this transaction">
-                                    🗑️
-                                </button>
-                            ` : ''}
                         </div>
+                    `;
+                });
+            }
+
+            html += `
+                    </div>
+                </div>
+            </div>
+            `;
+
+            document.getElementById('transactions-content').innerHTML = html;
+        }
+
+        // Apply transaction filter
+        window.applyTxFilter = () => {
+            if (userRole !== 'barber') {
+                txBarberFilter = document.getElementById('tx-barber')?.value || 'all';
+                txServiceFilter = document.getElementById('tx-service')?.value || 'all';
+            }
+            txStartDate = document.getElementById('tx-start')?.value || weekAgo;
+            txEndDate = document.getElementById('tx-end')?.value || today;
+            renderTransactions();
+        };
+
+        // Reset transaction filter
+        window.resetTxFilter = () => {
+            txBarberFilter = 'all';
+            txServiceFilter = 'all';
+            txStartDate = weekAgo;
+            txEndDate = today;
+            renderTransactions();
+        };
+
+        // Export transactions to CSV
+        window.exportTransactions = () => {
+            let filtered = [...transactions];
+            
+            if (userRole === 'barber') {
+                filtered = filtered.filter(t => t.barberId === currentUser?.uid);
+            } else {
+                if (txBarberFilter !== 'all') {
+                    filtered = filtered.filter(t => t.barberId === txBarberFilter);
+                }
+                if (txServiceFilter !== 'all') {
+                    if (txServiceFilter === 'custom') {
+                        filtered = filtered.filter(t => t.isCustom === true);
+                    } else {
+                        filtered = filtered.filter(t => t.serviceId === txServiceFilter);
+                    }
+                }
+            }
+            
+            filtered = filtered.filter(t => t.date >= txStartDate && t.date <= txEndDate);
+
+            let csv = "Date,Time,Barber,Service,Price,Customers,Type\n";
+            filtered.forEach(t => {
+                const date = t.timestamp?.toDate ? t.timestamp.toDate().toLocaleDateString() : t.date;
+                const time = t.timestamp?.toDate ? t.timestamp.toDate().toLocaleTimeString() : (t.time || '');
+                const name = t.isCustom ? (t.customName || 'Custom') : (t.serviceNameEn);
+                csv += `"${date}","${time}","${t.barberName}","${name}","${t.price}","${t.customers || 1}","${t.isCustom ? 'Custom' : 'Regular'}"\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `transactions-${txStartDate}-to-${txEndDate}.csv`;
+            a.click();
+        };
+
+        // Delete single transaction (admin only)
+        window.deleteTransaction = async (transactionId) => {
+            if (userRole !== 'admin') {
+                alert(i18n[lang].unauthorized);
+                return;
+            }
+            
+            if (!confirm(i18n[lang].confirmDelete)) return;
+            
+            try {
+                await deleteDoc(doc(db, "transactions", transactionId));
+                alert(i18n[lang].deleteSuccess);
+            } catch (error) {
+                console.error(error);
+                alert(i18n[lang].error + ': ' + error.message);
+            }
+        };
+
+        // Show bulk delete modal
+        window.showBulkDelete = () => {
+            if (userRole !== 'admin') return;
+            
+            const modal = document.createElement('div');
+            modal.id = 'bulk-modal';
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50';
+            
+            modal.innerHTML = `
+                <div class="bg-white rounded-2xl max-w-md w-full p-6">
+                    <h3 class="text-2xl font-bold mb-4 text-red-600">⚠️ ${i18n[lang].bulkDelete}</h3>
+                    <p class="mb-4">Delete all transactions in current filter?</p>
+                    <p class="text-sm text-gray-600 mb-6">${txStartDate} to ${txEndDate} | ${txBarberFilter !== 'all' ? 'Filtered by barber' : 'All barbers'}</p>
+                    
+                    <div class="flex gap-3">
+                        <button onclick="bulkDeleteTransactions()" class="flex-1 bg-red-600 text-white p-3 rounded-xl font-bold">${i18n[lang].confirmReset}</button>
+                        <button onclick="closeBulkModal()" class="flex-1 bg-gray-200 p-3 rounded-xl font-bold">${i18n[lang].cancel}</button>
                     </div>
                 </div>
             `;
-        });
-    }
-
-    html += `
-            </div>
-        </div>
-    </div>
-    `;
-
-    document.getElementById('transactions-content').innerHTML = html;
-}
-
-// ============== APPLY FILTER ==============
-window.applyTxFilter = () => {
-    if (userRole !== 'barber') {
-        txBarberFilter = document.getElementById('tx-barber').value;
-        txServiceFilter = document.getElementById('tx-service').value;
-    }
-    txStartDate = document.getElementById('tx-start').value;
-    txEndDate = document.getElementById('tx-end').value;
-    renderTransactions();
-};
-
-// ============== RESET FILTER ==============
-window.resetTxFilter = () => {
-    txBarberFilter = 'all';
-    txServiceFilter = 'all';
-    txStartDate = weekAgo;
-    txEndDate = today;
-    renderTransactions();
-};
-
-// ============== EXPORT TRANSACTIONS ==============
-window.exportTransactions = () => {
-    let filtered = [...transactions];
-    
-    if (userRole === 'barber') {
-        filtered = filtered.filter(t => t.barberId === currentUser.uid);
-    } else {
-        if (txBarberFilter !== 'all') {
-            filtered = filtered.filter(t => t.barberId === txBarberFilter);
-        }
-        if (txServiceFilter !== 'all') {
-            if (txServiceFilter === 'custom') {
-                filtered = filtered.filter(t => t.isCustom === true);
-            } else {
-                filtered = filtered.filter(t => t.serviceId === txServiceFilter);
-            }
-        }
-    }
-    
-    filtered = filtered.filter(t => t.date >= txStartDate && t.date <= txEndDate);
-
-    let csv = "Date,Time,Barber,Service,Price,Customers,Type\n";
-    filtered.forEach(t => {
-        const date = t.timestamp?.toDate ? t.timestamp.toDate().toLocaleDateString() : t.date;
-        const time = t.timestamp?.toDate ? t.timestamp.toDate().toLocaleTimeString() : (t.time || '');
-        const name = t.isCustom ? (t.customName || 'Custom') : (t.serviceNameEn);
-        csv += `"${date}","${time}","${t.barberName}","${name}","${t.price}","${t.customers || 1}","${t.isCustom ? 'Custom' : 'Regular'}"\n`;
-    });
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `transactions-${txStartDate}-to-${txEndDate}.csv`;
-    a.click();
-};
-
-// ============== DELETE SINGLE TRANSACTION (ADMIN ONLY) ==============
-window.deleteTransaction = async (transactionId) => {
-    if (userRole !== 'admin') {
-        alert('Only admin can delete transactions');
-        return;
-    }
-    
-    if (!confirm('Delete this transaction? This action cannot be undone.')) return;
-    
-    try {
-        await deleteDoc(doc(db, "transactions", transactionId));
-        // Transaction will disappear from UI via the listener
-    } catch (error) {
-        console.error(error);
-        alert('Error deleting transaction: ' + error.message);
-    }
-};
-
-// ============== BULK DELETE (ADMIN ONLY) ==============
-window.showBulkDelete = () => {
-    if (userRole !== 'admin') return;
-    
-    const modal = document.createElement('div');
-    modal.id = 'bulk-modal';
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50';
-    
-    modal.innerHTML = `
-        <div class="bg-white rounded-2xl max-w-md w-full p-6">
-            <h3 class="text-2xl font-bold mb-4 text-red-600">⚠️ Bulk Delete</h3>
-            <p class="mb-4">Delete all transactions in current filter?</p>
-            <p class="text-sm text-gray-600 mb-6">Current filter: ${txStartDate} to ${txEndDate} | ${txBarberFilter !== 'all' ? 'Barber filtered' : 'All barbers'}</p>
             
-            <div class="flex gap-3">
-                <button onclick="bulkDeleteTransactions()" class="flex-1 bg-red-600 text-white p-3 rounded-xl font-bold">Yes, Delete All</button>
-                <button onclick="closeBulkModal()" class="flex-1 bg-gray-200 p-3 rounded-xl font-bold">Cancel</button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-};
+            document.body.appendChild(modal);
+        };
 
-window.closeBulkModal = () => {
-    const m = document.getElementById('bulk-modal');
-    if (m) m.remove();
-};
+        window.closeBulkModal = () => {
+            const m = document.getElementById('bulk-modal');
+            if (m) m.remove();
+        };
 
-window.bulkDeleteTransactions = async () => {
-    if (userRole !== 'admin') return;
-    
-    // Get current filtered transactions
-    let toDelete = [...transactions];
-    
-    if (txBarberFilter !== 'all') {
-        toDelete = toDelete.filter(t => t.barberId === txBarberFilter);
-    }
-    if (txServiceFilter !== 'all') {
-        if (txServiceFilter === 'custom') {
-            toDelete = toDelete.filter(t => t.isCustom === true);
-        } else {
-            toDelete = toDelete.filter(t => t.serviceId === txServiceFilter);
-        }
-    }
-    toDelete = toDelete.filter(t => t.date >= txStartDate && t.date <= txEndDate);
-    
-    if (toDelete.length === 0) {
-        alert('No transactions match current filter');
-        closeBulkModal();
-        return;
-    }
-    
-    if (!confirm(`Delete ${toDelete.length} transactions? This cannot be undone!`)) {
-        closeBulkModal();
-        return;
-    }
-    
-    try {
-        const batch = writeBatch(db);
-        toDelete.forEach(t => {
-            batch.delete(doc(db, "transactions", t.id));
-        });
-        await batch.commit();
-        closeBulkModal();
-        alert(`Deleted ${toDelete.length} transactions`);
-    } catch (error) {
-        console.error(error);
-        alert('Error: ' + error.message);
-    }
-};
+        // Bulk delete transactions
+        window.bulkDeleteTransactions = async () => {
+            if (userRole !== 'admin') return;
+            
+            // Get current filtered transactions
+            let toDelete = [...transactions];
+            
+            if (txBarberFilter !== 'all') {
+                toDelete = toDelete.filter(t => t.barberId === txBarberFilter);
+            }
+            if (txServiceFilter !== 'all') {
+                if (txServiceFilter === 'custom') {
+                    toDelete = toDelete.filter(t => t.isCustom === true);
+                } else {
+                    toDelete = toDelete.filter(t => t.serviceId === txServiceFilter);
+                }
+            }
+            toDelete = toDelete.filter(t => t.date >= txStartDate && t.date <= txEndDate);
+            
+            if (toDelete.length === 0) {
+                alert(i18n[lang].noData);
+                closeBulkModal();
+                return;
+            }
+            
+            if (!confirm(`Delete ${toDelete.length} transactions?`)) {
+                closeBulkModal();
+                return;
+            }
+            
+            try {
+                const batch = writeBatch(db);
+                toDelete.forEach(t => {
+                    batch.delete(doc(db, "transactions", t.id));
+                });
+                await batch.commit();
+                closeBulkModal();
+                alert(i18n[lang].deleteSuccess);
+            } catch (error) {
+                console.error(error);
+                alert(i18n[lang].error + ': ' + error.message);
+            }
+        };
 
-        // ============== REPORTS - DETAILED BREAKDOWNS ==============
+        // ============== REPORTS ==============
         function renderReports() {
             let filtered = transactions.filter(t => t.date >= reportStartDate && t.date <= reportEndDate);
             
             if (reportBarberFilter !== 'all') {
                 filtered = filtered.filter(t => t.barberId === reportBarberFilter);
             }
-            if (reportServiceFilter !== 'all') {
-                if (reportServiceFilter === 'custom') {
-                    filtered = filtered.filter(t => t.isCustom === true);
-                } else {
-                    filtered = filtered.filter(t => t.serviceId === reportServiceFilter);
-                }
-            }
 
-            // Barber breakdown - WITH INDIVIDUAL TRANSACTIONS
+            // Barber stats
             const barberStats = {};
             filtered.forEach(t => {
                 if (!barberStats[t.barberId]) {
@@ -1247,25 +1182,23 @@ window.bulkDeleteTransactions = async () => {
                 barberStats[t.barberId].transactions.push(t);
             });
 
-            // Service breakdown - WITH INDIVIDUAL TRANSACTIONS
+            // Service stats
             const serviceStats = {};
             filtered.forEach(t => {
                 const key = t.isCustom ? (t.customName || 'custom') : (t.serviceId || 'other');
                 if (!serviceStats[key]) {
                     serviceStats[key] = {
-                        name: t.isCustom ? (t.customName || 'Custom Service') : (lang === 'en' ? t.serviceNameEn : t.serviceNameAr),
+                        name: t.isCustom ? (t.customName || 'Custom') : (lang === 'en' ? t.serviceNameEn : t.serviceNameAr),
                         revenue: 0,
                         count: 0,
-                        transactions: [],
                         isCustom: t.isCustom || false
                     };
                 }
                 serviceStats[key].revenue += t.price || 0;
                 serviceStats[key].count++;
-                serviceStats[key].transactions.push(t);
             });
 
-            // Daily breakdown
+            // Daily stats
             const dailyStats = {};
             filtered.forEach(t => {
                 if (!dailyStats[t.date]) {
@@ -1284,7 +1217,7 @@ window.bulkDeleteTransactions = async () => {
                     
                     <!-- Filters -->
                     <div class="bg-white p-4 rounded-2xl shadow">
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
             `;
 
             if (userRole !== 'barber') {
@@ -1293,13 +1226,6 @@ window.bulkDeleteTransactions = async () => {
                         <select id="report-barber" class="w-full p-3 border rounded-xl">
                             <option value="all">${i18n[lang].allBarbers}</option>
                             ${barbers.map(b => `<option value="${b.uid}" ${reportBarberFilter === b.uid ? 'selected' : ''}>${b.name || b.email}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div>
-                        <select id="report-service" class="w-full p-3 border rounded-xl">
-                            <option value="all">${i18n[lang].allServices}</option>
-                            <option value="custom" ${reportServiceFilter === 'custom' ? 'selected' : ''}>✨ Custom Services</option>
-                            ${services.map(s => `<option value="${s.id}" ${reportServiceFilter === s.id ? 'selected' : ''}>${lang === 'en' ? s.nameEn : s.nameAr}</option>`).join('')}
                         </select>
                     </div>
                 `;
@@ -1332,65 +1258,38 @@ window.bulkDeleteTransactions = async () => {
                     </div>
                 </div>
 
-                <!-- BARBER BREAKDOWN with individual transactions -->
+                <!-- Barber Breakdown -->
                 <div class="bg-white p-6 rounded-2xl shadow">
                     <h3 class="font-bold text-xl mb-4">${i18n[lang].barberBreakdown}</h3>
-                    
                     ${Object.values(barberStats).map(b => `
-                        <div class="mb-6 border-b pb-4">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="font-bold text-lg">${b.name}</span>
-                                <span class="text-blue-600 font-bold">$${b.revenue} (${b.count} tx, ${b.customers} cust)</span>
-                            </div>
-                            <div class="pl-4 space-y-1 max-h-40 overflow-y-auto">
-                                ${b.transactions.map(t => {
-                                    const date = t.timestamp?.toDate ? t.timestamp.toDate().toLocaleString() : `${t.date} ${t.time || ''}`;
-                                    const name = t.isCustom ? (t.customName || 'Custom') : (lang === 'en' ? t.serviceNameEn : t.serviceNameAr);
-                                    return `
-                                        <div class="text-sm flex justify-between border-l-2 border-blue-200 pl-2">
-                                            <span>${date} - ${name}</span>
-                                            <span class="text-blue-600">$${t.price} (${t.customers || 1} cust)</span>
-                                        </div>
-                                    `;
-                                }).join('')}
+                        <div class="mb-4 border-b pb-2">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold">${b.name}</span>
+                                <span class="text-blue-600 font-bold">$${b.revenue} (${b.count} tx)</span>
                             </div>
                         </div>
                     `).join('')}
                 </div>
 
-                <!-- SERVICE BREAKDOWN with individual transactions -->
+                <!-- Service Breakdown -->
                 <div class="bg-white p-6 rounded-2xl shadow">
                     <h3 class="font-bold text-xl mb-4">${i18n[lang].serviceBreakdown}</h3>
-                    
                     ${Object.values(serviceStats).sort((a,b) => b.revenue - a.revenue).map(s => `
-                        <div class="mb-6 border-b pb-4">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="font-bold text-lg">${s.name} ${s.isCustom ? '✨' : ''}</span>
-                                <span class="text-blue-600 font-bold">$${s.revenue} (${s.count} tx)</span>
-                            </div>
-                            <div class="pl-4 space-y-1 max-h-40 overflow-y-auto">
-                                ${s.transactions.map(t => {
-                                    const date = t.timestamp?.toDate ? t.timestamp.toDate().toLocaleString() : `${t.date} ${t.time || ''}`;
-                                    return `
-                                        <div class="text-sm flex justify-between border-l-2 border-green-200 pl-2">
-                                            <span>${date} - ${t.barberName}</span>
-                                            <span class="text-blue-600">$${t.price} (${t.customers || 1} cust)</span>
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
+                        <div class="flex justify-between items-center border-b py-2">
+                            <span>${s.name} ${s.isCustom ? '✨' : ''}</span>
+                            <span class="text-blue-600 font-bold">$${s.revenue} (${s.count}x)</span>
                         </div>
                     `).join('')}
                 </div>
 
-                <!-- DAILY SUMMARY -->
+                <!-- Daily Summary -->
                 <div class="bg-white p-6 rounded-2xl shadow">
                     <h3 class="font-bold text-xl mb-4">${i18n[lang].dailySummary}</h3>
                     <div class="space-y-2 max-h-60 overflow-y-auto">
                         ${sortedDays.map(d => `
                             <div class="flex justify-between border-b py-2">
                                 <span class="font-medium">${d}</span>
-                                <span class="text-blue-600">$${dailyStats[d].revenue} (${dailyStats[d].count} tx, ${dailyStats[d].customers} cust)</span>
+                                <span class="text-blue-600">$${dailyStats[d].revenue} (${dailyStats[d].count} tx)</span>
                             </div>
                         `).join('')}
                     </div>
@@ -1400,17 +1299,17 @@ window.bulkDeleteTransactions = async () => {
             document.getElementById('reports-content').innerHTML = html;
         }
 
+        // Apply report filter
         window.applyReportFilter = () => {
             if (userRole !== 'barber') {
-                reportBarberFilter = document.getElementById('report-barber').value;
-                reportServiceFilter = document.getElementById('report-service').value;
+                reportBarberFilter = document.getElementById('report-barber')?.value || 'all';
             }
-            reportStartDate = document.getElementById('report-start').value;
-            reportEndDate = document.getElementById('report-end').value;
+            reportStartDate = document.getElementById('report-start')?.value || weekAgo;
+            reportEndDate = document.getElementById('report-end')?.value || today;
             renderReports();
         };
 
-        // ============== ANALYTICS - PEAK HOURS/DAYS ==============
+        // ============== ANALYTICS ==============
         function renderAnalytics() {
             let filtered = transactions.filter(t => t.date >= analyticsStartDate && t.date <= analyticsEndDate);
 
@@ -1419,64 +1318,41 @@ window.bulkDeleteTransactions = async () => {
             for (let i = 0; i < 24; i++) hourlyStats[i] = { customers: 0, revenue: 0, transactions: 0 };
             
             filtered.forEach(t => {
-                let hour;
+                let hour = 12; // default
                 if (t.timestamp?.toDate) {
                     hour = t.timestamp.toDate().getHours();
                 } else if (t.time) {
-                    // Parse time string like "5:17:17 PM"
-                    const timeMatch = t.time.match(/(\d+):(\d+):(\d+)\s*(AM|PM)/i);
-                    if (timeMatch) {
-                        let h = parseInt(timeMatch[1]);
-                        const ampm = timeMatch[4].toUpperCase();
-                        if (ampm === 'PM' && h < 12) h += 12;
-                        if (ampm === 'AM' && h === 12) h = 0;
+                    const match = t.time.match(/(\d+):\d+:\d+\s*(AM|PM)/i);
+                    if (match) {
+                        let h = parseInt(match[1]);
+                        if (match[2].toUpperCase() === 'PM' && h < 12) h += 12;
+                        if (match[2].toUpperCase() === 'AM' && h === 12) h = 0;
                         hour = h;
-                    } else {
-                        hour = 12; // default
                     }
-                } else {
-                    hour = 12;
                 }
                 
-                if (!hourlyStats[hour]) hourlyStats[hour] = { customers: 0, revenue: 0, transactions: 0 };
-                hourlyStats[hour].customers += t.customers || 1;
-                hourlyStats[hour].revenue += t.price || 0;
-                hourlyStats[hour].transactions++;
+                if (hourlyStats[hour]) {
+                    hourlyStats[hour].customers += t.customers || 1;
+                    hourlyStats[hour].revenue += t.price || 0;
+                    hourlyStats[hour].transactions++;
+                }
             });
 
-            // Find peak hours
-            const peakHours = Object.entries(hourlyStats)
-                .map(([h, d]) => ({ hour: parseInt(h), customers: d.customers, revenue: d.revenue, tx: d.transactions }))
-                .sort((a, b) => b.customers - a.customers)
-                .slice(0, 5);
-
-            // Daily distribution
+            // Day distribution
             const dayNames = lang === 'en' 
-                ? ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+                ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
                 : ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
             
             const dailyStats = {};
-            dayNames.forEach((d, i) => dailyStats[i] = { name: d, customers: 0, revenue: 0, transactions: 0 });
+            dayNames.forEach((d, i) => dailyStats[i] = { name: d, customers: 0, revenue: 0 });
 
             filtered.forEach(t => {
-                let day;
-                if (t.timestamp?.toDate) {
-                    day = t.timestamp.toDate().getDay();
-                } else {
-                    // Approximate from date string
-                    const d = new Date(t.date + 'T12:00:00');
-                    day = d.getDay();
+                let day = new Date(t.date + 'T12:00:00').getDay();
+                if (dailyStats[day]) {
+                    dailyStats[day].customers += t.customers || 1;
+                    dailyStats[day].revenue += t.price || 0;
                 }
-                if (!dailyStats[day]) dailyStats[day] = { customers: 0, revenue: 0, transactions: 0 };
-                dailyStats[day].customers += t.customers || 1;
-                dailyStats[day].revenue += t.price || 0;
-                dailyStats[day].transactions++;
             });
-
-            // Find peak days
-            const peakDays = Object.entries(dailyStats)
-                .map(([d, data]) => ({ day: parseInt(d), name: data.name, customers: data.customers, revenue: data.revenue }))
-                .sort((a, b) => b.customers - a.customers);
 
             let html = `
                 <div class="space-y-6">
@@ -1514,65 +1390,33 @@ window.bulkDeleteTransactions = async () => {
                     <!-- Peak Hours -->
                     <div class="bg-white p-6 rounded-2xl shadow">
                         <h3 class="font-bold text-xl mb-4">${i18n[lang].peakHours}</h3>
-                        <div class="space-y-3">
-                            ${peakHours.map((p, idx) => `
-                                <div class="flex items-center">
-                                    <div class="w-16 font-bold">${p.hour}:00</div>
-                                    <div class="flex-1 h-8 bg-gray-200 rounded-full overflow-hidden">
-                                        <div class="h-full bg-blue-500 text-white text-xs flex items-center justify-end pr-2" 
-                                             style="width: ${Math.min(100, (p.customers / peakHours[0].customers) * 100)}%">
-                                            ${p.customers} cust
-                                        </div>
+                        <div class="space-y-2">
+                            ${Object.entries(hourlyStats)
+                                .filter(([_, d]) => d.customers > 0)
+                                .sort((a, b) => b[1].customers - a[1].customers)
+                                .slice(0, 5)
+                                .map(([h, d]) => `
+                                    <div class="flex justify-between border-b py-2">
+                                        <span>${h}:00</span>
+                                        <span class="text-blue-600 font-bold">${d.customers} cust ($${d.revenue})</span>
                                     </div>
-                                    <div class="w-20 text-right font-bold text-blue-600">$${p.revenue}</div>
-                                </div>
-                            `).join('')}
+                                `).join('')}
                         </div>
                     </div>
 
                     <!-- Busiest Days -->
                     <div class="bg-white p-6 rounded-2xl shadow">
                         <h3 class="font-bold text-xl mb-4">${i18n[lang].busiestDays}</h3>
-                        <div class="space-y-3">
-                            ${peakDays.map((d, idx) => `
-                                <div class="flex items-center">
-                                    <div class="w-24 font-bold">${d.name}</div>
-                                    <div class="flex-1 h-8 bg-gray-200 rounded-full overflow-hidden">
-                                        <div class="h-full bg-green-500 text-white text-xs flex items-center justify-end pr-2" 
-                                             style="width: ${Math.min(100, (d.customers / peakDays[0].customers) * 100)}%">
-                                            ${d.customers} cust
-                                        </div>
+                        <div class="space-y-2">
+                            ${Object.values(dailyStats)
+                                .filter(d => d.customers > 0)
+                                .sort((a, b) => b.customers - a.customers)
+                                .map(d => `
+                                    <div class="flex justify-between border-b py-2">
+                                        <span>${d.name}</span>
+                                        <span class="text-green-600 font-bold">${d.customers} cust ($${d.revenue})</span>
                                     </div>
-                                    <div class="w-20 text-right font-bold text-green-600">$${d.revenue}</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-
-                    <!-- Hourly Distribution Table -->
-                    <div class="bg-white p-6 rounded-2xl shadow">
-                        <h3 class="font-bold text-xl mb-4">${i18n[lang].hourlyDistribution}</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm">
-                                <thead>
-                                    <tr class="bg-gray-50">
-                                        <th class="p-2 text-left">${i18n[lang].hour}</th>
-                                        <th class="p-2 text-right">${i18n[lang].customers}</th>
-                                        <th class="p-2 text-right">${i18n[lang].transactions}</th>
-                                        <th class="p-2 text-right">${i18n[lang].revenue}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${Object.entries(hourlyStats).map(([h, d]) => `
-                                        <tr class="border-b">
-                                            <td class="p-2">${h}:00</td>
-                                            <td class="p-2 text-right">${d.customers}</td>
-                                            <td class="p-2 text-right">${d.transactions}</td>
-                                            <td class="p-2 text-right text-blue-600">$${d.revenue}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
+                                `).join('')}
                         </div>
                     </div>
                 </div>
@@ -1581,13 +1425,14 @@ window.bulkDeleteTransactions = async () => {
             document.getElementById('analytics-content').innerHTML = html;
         }
 
+        // Apply analytics filter
         window.applyAnalyticsFilter = () => {
-            analyticsStartDate = document.getElementById('analytics-start').value;
-            analyticsEndDate = document.getElementById('analytics-end').value;
+            analyticsStartDate = document.getElementById('analytics-start')?.value || weekAgo;
+            analyticsEndDate = document.getElementById('analytics-end')?.value || today;
             renderAnalytics();
         };
 
-        // ============== USER MANAGEMENT (ADMIN ONLY) ==============
+        // ============== USER MANAGEMENT ==============
         function renderUsers() {
             let html = `
                 <div class="space-y-6">
@@ -1630,6 +1475,7 @@ window.bulkDeleteTransactions = async () => {
             document.getElementById('users-content').innerHTML = html;
         }
 
+        // Add new user
         window.addNewUser = async () => {
             const name = document.getElementById('new-name').value;
             const email = document.getElementById('new-email').value;
@@ -1643,7 +1489,7 @@ window.bulkDeleteTransactions = async () => {
             try {
                 const cred = await createUserWithEmailAndPassword(auth, email, pass);
                 await setDoc(doc(db, "users", cred.user.uid), {
-                    name, email, role, createdAt: serverTimestamp(), createdBy: currentUser.uid
+                    name, email, role, createdAt: serverTimestamp(), createdBy: currentUser?.uid
                 });
                 alert(i18n[lang].userCreated);
                 document.getElementById('new-name').value = '';
@@ -1655,6 +1501,7 @@ window.bulkDeleteTransactions = async () => {
             }
         };
 
+        // Delete user
         window.deleteUser = async (uid) => {
             if (!confirm(i18n[lang].confirmDelete)) return;
             try {
@@ -1664,7 +1511,7 @@ window.bulkDeleteTransactions = async () => {
             }
         };
 
-        // ============== SERVICE MANAGEMENT (ADMIN ONLY) ==============
+        // ============== SERVICE MANAGEMENT ==============
         function renderServicesMgmt() {
             let html = `
                 <div class="space-y-6">
@@ -1702,6 +1549,7 @@ window.bulkDeleteTransactions = async () => {
             document.getElementById('services-content').innerHTML = html;
         }
 
+        // Add new service
         window.addNewService = async () => {
             const en = document.getElementById('service-en').value;
             const ar = document.getElementById('service-ar').value;
@@ -1721,6 +1569,7 @@ window.bulkDeleteTransactions = async () => {
             document.getElementById('service-icon').value = '✂️';
         };
 
+        // Delete service
         window.deleteService = async (id) => {
             if (!confirm(i18n[lang].confirmDelete)) return;
             await deleteDoc(doc(db, "services", id));
@@ -1753,6 +1602,8 @@ window.bulkDeleteTransactions = async () => {
                 if (i18n[lang][key]) {
                     if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
                         el.placeholder = i18n[lang][key];
+                    } else if (el.tagName === 'OPTION') {
+                        el.textContent = i18n[lang][key];
                     } else {
                         el.innerText = i18n[lang][key];
                     }
@@ -1771,7 +1622,7 @@ window.bulkDeleteTransactions = async () => {
     <header class="bg-white shadow-sm p-4 sticky top-0 z-40 flex justify-between items-center">
         <div class="flex items-center gap-3">
             <img src="hnb04.jpg" class="h-10 w-10 rounded-full border-2 border-blue-200">
-            <h1 class="font-bold text-xl text-gray-800" data-i18n="appName">Barber Analytics Pro</h1>
+            <h1 class="font-bold text-xl text-gray-800" data-i18n="appName">Barber Shop Pro</h1>
         </div>
         <div class="flex gap-3">
             <button onclick="toggleLang()" class="bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-bold">عربي / EN</button>
@@ -1812,7 +1663,7 @@ window.bulkDeleteTransactions = async () => {
 
         <!-- App View -->
         <div id="app-view" class="hidden space-y-4">
-            <!-- Navigation - Role-based tabs -->
+            <!-- Navigation -->
             <div class="bg-white p-2 rounded-xl shadow-sm flex gap-1 overflow-x-auto">
                 <button id="tab-dashboard" onclick="showPanel('dashboard')" class="nav-tab flex-1 py-2 px-3 rounded-lg font-bold text-gray-700 hover:bg-gray-200 whitespace-nowrap">📊 <span data-i18n="dashboard">Dashboard</span></button>
                 <button id="tab-log" onclick="showPanel('log')" class="nav-tab flex-1 py-2 px-3 rounded-lg font-bold text-gray-700 hover:bg-gray-200 whitespace-nowrap">✂️ <span data-i18n="logService">Log</span></button>
@@ -1843,5 +1694,3 @@ window.bulkDeleteTransactions = async () => {
     </main>
 </body>
 </html>
-
-
