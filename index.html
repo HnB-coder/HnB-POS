@@ -821,7 +821,7 @@
             }
         };
 
-                // Custom service log - WITH CONFIRMATION
+                        // Custom service log - WITH CONFIRMATION
         window.logCustomService = async () => {
             let barberId;
             
@@ -893,20 +893,7 @@
                 console.error(error);
                 alert(i18n[lang].error + ': ' + error.message);
             }
-        };
-                // Clear form
-                if (document.getElementById('custom-name')) document.getElementById('custom-name').value = '';
-                if (document.getElementById('custom-price')) document.getElementById('custom-price').value = '';
-                
-                alert(i18n[lang].serviceLogged);
-                
-            } catch (error) {
-                console.error(error);
-                alert(i18n[lang].error + ': ' + error.message);
-            }
-        };
-
-        // ============== TRANSACTIONS - WITH ADMIN DELETE ==============
+        };        // ============== TRANSACTIONS - WITH ADMIN DELETE ==============
         function renderTransactions() {
             // Apply filters
             let filtered = [...transactions];
