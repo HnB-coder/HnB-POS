@@ -10,7 +10,7 @@ window.FIREBASE_CONFIG = {
     // Firebase Auth domain
     authDomain: "barbershoppos-a5ad8.firebaseapp.com",
     
-    // Firebase project ID
+    // Firebase  project ID
     projectId: "barbershoppos-a5ad8",
     
     // Firebase storage bucket
