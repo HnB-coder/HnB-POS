@@ -765,7 +765,7 @@
             document.getElementById('log-content').innerHTML = html;
         }
 
-        // Regular service log
+                // Regular service log - WITH CONFIRMATION
         window.logService = async (serviceId) => {
             const service = services.find(s => s.id === serviceId);
             if (!service) return;
@@ -784,6 +784,15 @@
 
             const customers = parseInt(document.getElementById('log-customers')?.value) || 1;
             const barber = barbers.find(b => b.uid === barberId);
+            const serviceName = lang === 'en' ? service.nameEn : service.nameAr;
+            
+            // CONFIRMATION PROMPT
+            const confirmMessage = `Confirm Service:\n\nBarber: ${barber?.name || barber?.email?.split('@')[0] || 'Unknown'}\nService: ${serviceName}\nPrice: $${service.price}\nCustomers: ${customers}\n\nClick OK to save, Cancel to discard.`;
+            
+            if (!confirm(confirmMessage)) {
+                return; // User clicked Cancel - don't save
+            }
+            
             const now = new Date();
             const dateStr = now.toISOString().split('T')[0];
             const timeStr = now.toLocaleTimeString();
@@ -812,7 +821,7 @@
             }
         };
 
-        // Custom service log - FIXED
+        // Custom service log - WITH CONFIRMATION
         window.logCustomService = async () => {
             let barberId;
             
@@ -840,6 +849,18 @@
             }
 
             const barber = barbers.find(b => b.uid === barberId);
+            const displayName = customName || (lang === 'en' ? 'Custom Service' : 'خدمة مخصصة');
+            
+            // CONFIRMATION PROMPT
+            const confirmMessage = `Confirm Custom Service:\n\nBarber: ${barber?.name || barber?.email?.split('@')[0] || 'Unknown'}\nService: ${displayName}\nPrice: $${price}\nCustomers: ${customers}\n\nClick OK to save, Cancel to discard.`;
+            
+            if (!confirm(confirmMessage)) {
+                // Clear form fields if user cancels
+                if (document.getElementById('custom-name')) document.getElementById('custom-name').value = '';
+                if (document.getElementById('custom-price')) document.getElementById('custom-price').value = '';
+                return; // User clicked Cancel - don't save
+            }
+            
             const now = new Date();
             const dateStr = now.toISOString().split('T')[0];
             const timeStr = now.toLocaleTimeString();
@@ -862,7 +883,7 @@
                     isCustom: true
                 });
 
-                // Clear form
+                // Clear form fields after successful save
                 if (document.getElementById('custom-name')) document.getElementById('custom-name').value = '';
                 if (document.getElementById('custom-price')) document.getElementById('custom-price').value = '';
                 
@@ -873,7 +894,6 @@
                 alert(i18n[lang].error + ': ' + error.message);
             }
         };
-
         // ============== TRANSACTIONS - WITH ADMIN DELETE ==============
         function renderTransactions() {
             // Apply filters
